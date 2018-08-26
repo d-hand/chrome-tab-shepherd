@@ -1,0 +1,23 @@
+{
+    "name": "Tabs Shepherd",
+    "description" : "Tabs Shepherd",
+    "version": "1.0",
+    "manifest_version": 2,
+    "permissions": ["tabs", "storage"],
+    "browser_action": {
+        "default_popup": "popup.html",
+        "default_icon": "images/tabs-shepherd.png"
+    },
+    "background": {
+        "scripts": ["common.js", "background.js"],
+        "persistent": false
+    },    
+    "commands": {
+        "_execute_browser_action": {
+          "suggested_key": {
+            "default": "Ctrl+Q"
+          },
+          "description": "Opens Tabs Shepherd"
+        }
+    }
+}
