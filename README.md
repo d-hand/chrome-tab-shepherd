@@ -1,2 +1,2 @@
-# TabShepherd
-chrome extension TabShepherd
+# Tab Shepherd
+chrome extension Tab Shepherd
