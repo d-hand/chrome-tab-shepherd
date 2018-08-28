@@ -1,2 +1,2 @@
-# chrome-tabs-shepherd
-chrome extension TabsShepherd
+# TabShepherd
+chrome extension TabShepherd
