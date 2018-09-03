@@ -51,12 +51,11 @@ TabShepherdKeyHandler.__init()
         3) дефолтный favicon и screenShot
         4) что-то сделать со скринами... мелко не видно ничего 
         5) выравнить title по середине favicon-а?
-        6) сделать background persistent=true, а то кажется из-за этого теряется вся инфа о вкладках
         7) что делать если вкладок слишком много ?)
         8) строка детализации полный url или title ?)
         9) добваить тень!)
         11) обработать клик мыши 
-        12) по нормальному считать  rowOffset
+        12) по нормальному считать rowOffset
 */
 
 var tabs = undefined
@@ -151,14 +150,13 @@ iframe.onload = function() {
     
     tabList.appendChild(loader);
 
-    chrome.runtime.sendMessage(chrome.runtime.id, {getTabs: true}, (response) => {
+    chrome.runtime.sendMessage(chrome.runtime.id, {getTabs: true}, (response) => {        
+        tabs = response
         tabList.removeChild(loader)
-        tabs = response        
         tabs.forEach(tab => tabList.appendChild(createTabItem(tab)))
         selectNewTabItem(tabList.children.length > 1 ? 1 : 0)        
         calculateRowOffset()        
     });
-
 
     function createTabItem(tab) {
         var tabItem = document.createElement('div')
@@ -218,7 +216,7 @@ TabShepherdKeyHandler.onShow = () =>  {
 TabShepherdKeyHandler.onHide  = () => {
     document.body.removeChild(iframe)
     if (tabs && tabs[selectedIndex])
-        chrome.runtime.sendMessage(chrome.runtime.id, { selectedTabId: tabs[selectedIndex].tabId });    
+        setTimeout(() => chrome.runtime.sendMessage(chrome.runtime.id, { selectedTabId: tabs[selectedIndex].tabId }), 100)
 }
 
 TabShepherdKeyHandler.onArrowRight = () => {
