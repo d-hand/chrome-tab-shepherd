@@ -55,11 +55,13 @@ TabShepherdKeyHandler.__init()
         8) строка детализации полный url или title ?)
         9) добваить тень!)
         11) обработать клик мыши 
-        12) по нормальному считать rowOffset
 */
 
+const TAB_ITEM_WIDTH = 256
+const TAB_ITEM_BORDER_WIDTH = 2
+
 var tabs = undefined
-var rowOffset = undefined
+var rowLength = undefined
 var selectedIndex = undefined
 
 var iframe = document.createElement('iframe')
@@ -91,7 +93,7 @@ style.appendChild(document.createTextNode(`
         100% { transform: rotate(360deg); }
     }
 
-    .tabList {
+    .tab-list {
         width: 100%;
         height: 100%;
     
@@ -105,19 +107,18 @@ style.appendChild(document.createTextNode(`
         background:  rgba(0, 0, 0, 0.0);    
     }
 
-    .tabItem {
+    .tab-item {
         background: rgba(0, 0, 0, 0.0);
-        width: 256px;
-        border-width: 2px;
-        border-style: solid;
+        width: ${TAB_ITEM_WIDTH}px;
+        border: ${TAB_ITEM_BORDER_WIDTH}px solid black;
         border-radius: 15px;       
     }
 
-    .tabItem-selected {
+    .tab-item.selected {
         border-color: blue;
     }
 
-    .titleContainer {
+    .title-container {
         background: #cecece;
         border-bottom: 1px solid black;
         border-radius: 15px 15px 0px 0px;
@@ -131,7 +132,7 @@ style.appendChild(document.createTextNode(`
         margin-right: 4px;
     }
 
-    .screenShot {
+    .screen-shot {
         border-radius: 0px 0px 15px 15px;
     }
     
@@ -141,10 +142,9 @@ var loader = document.createElement('div')
 loader.classList.add('loader')
 
 var tabList = document.createElement('div')
-tabList.classList.add('tabList')
+tabList.classList.add('tab-list')
 
-iframe.onload = function() {
-    tabList.innerHTML = ''
+iframe.onload = function() {    
     iframe.contentDocument.getElementsByTagName("head")[0].appendChild(style);    
     iframe.contentDocument.body.appendChild(tabList)
     
@@ -155,12 +155,12 @@ iframe.onload = function() {
         tabList.removeChild(loader)
         tabs.forEach(tab => tabList.appendChild(createTabItem(tab)))
         selectNewTabItem(tabList.children.length > 1 ? 1 : 0)        
-        calculateRowOffset()        
+        calculateRowLength()
     });
 
     function createTabItem(tab) {
         var tabItem = document.createElement('div')
-        tabItem.classList.add('tabItem')
+        tabItem.classList.add('tab-item')
         tabItem.appendChild(createTitleContainer(tab))
         tabItem.appendChild(createScreenShot(tab))            
         return tabItem
@@ -169,7 +169,7 @@ iframe.onload = function() {
 
     function createTitleContainer(tab) {
         var container = document.createElement('div')
-        container.classList.add('titleContainer')
+        container.classList.add('title-container')
 
         var favicon = document.createElement('img')
         favicon.classList.add('favicon')
@@ -188,23 +188,16 @@ iframe.onload = function() {
 
     function createScreenShot(tab) {
         var screenShot = document.createElement('img')
-        screenShot.classList.add('screenShot')
+        screenShot.classList.add('screen-shot')
         screenShot.src = tab.screenShotDataUrl || ""
-        screenShot.width = 256 
+        screenShot.width = TAB_ITEM_WIDTH 
         screenShot.height = 128 
 
         return screenShot
     }
 
-    function calculateRowOffset() {    
-        let bottom = tabList.children[0].getBoundingClientRect().bottom;
-        for (let i = 0; i < tabList.children.length; ++i) {
-            let top = tabList.children[i].getBoundingClientRect().top
-            if (top > bottom) {
-                rowOffset = i
-                return;            
-            }
-        }    
+    function calculateRowLength() {  
+        rowLength = Math.floor(iframe.contentDocument.body.offsetWidth / (TAB_ITEM_WIDTH + 2 * TAB_ITEM_BORDER_WIDTH))
     }    
 };
 
@@ -214,6 +207,7 @@ TabShepherdKeyHandler.onShow = () =>  {
 }
 
 TabShepherdKeyHandler.onHide  = () => {
+    tabList.innerHTML = ''
     document.body.removeChild(iframe)
     if (tabs && tabs[selectedIndex])
         setTimeout(() => chrome.runtime.sendMessage(chrome.runtime.id, { selectedTabId: tabs[selectedIndex].tabId }), 100)
@@ -228,12 +222,12 @@ TabShepherdKeyHandler.onArrowLeft = () => {
 }
 
 TabShepherdKeyHandler.onArrowUp = () => {
-    var newSelectedIndex = selectedIndex - rowOffset
+    var newSelectedIndex = selectedIndex - rowLength
     selectNewTabItem(newSelectedIndex >= 0 ? newSelectedIndex : selectedIndex)    
 }
 
 TabShepherdKeyHandler.onArrowDown = () => {
-    var newSelectedIndex = selectedIndex + rowOffset
+    var newSelectedIndex = selectedIndex + rowLength
     selectNewTabItem(newSelectedIndex < tabList.children.length ? newSelectedIndex : tabList.children.length - 1)
 }
 
@@ -244,8 +238,8 @@ function selectNewTabItem(index) {
 
     var selectedTabItem = tabList.children[selectedIndex]
     if (selectedTabItem) 
-        selectedTabItem.classList.remove('tabItem-selected')
+        selectedTabItem.classList.remove('selected')
 
-    newSelectedTabItem.classList.add('tabItem-selected')
+    newSelectedTabItem.classList.add('selected')
     selectedIndex = index    
 }
