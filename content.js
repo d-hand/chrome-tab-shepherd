@@ -45,7 +45,7 @@ TabShepherdKeyHandler.__init()
 
 /*
     TODO 
-        0) надо зафиксировать ширину вкладки, точно можно будте сказать сколько вкладок влезит на экран 
+        0) сделать нормальный переход с предпоследнией на последню вкладку
         1) подобрать огненный шрифт
         2) переписать это говно на риакт (c Webpack-окм кончено)
         3) дефолтный favicon и screenShot
@@ -55,8 +55,8 @@ TabShepherdKeyHandler.__init()
         8) строка детализации полный url или title ?)
         9) добваить тень!)
         11) обработать клик мыши 
-        12) переписать background.js чтобы он возвращал всегда только активные вкладки и скрины по ним если есть
         13) tab ~ ~ ~ nextTab nextTab =)
+        14) подумать над установкой (обновить все вкладки или фоном выполнить скрипт или...)
 */
 
 const TAB_ITEM_WIDTH = 256
@@ -157,49 +157,49 @@ iframe.onload = function() {
         tabs.forEach(tab => tabList.appendChild(createTabItem(tab)))
         selectNewTabItem(tabList.children.length > 1 ? 1 : 0)        
         calculateRowLength()
-    });
-
-    function createTabItem(tab) {
-        var tabItem = document.createElement('div')
-        tabItem.classList.add('tab-item')
-        tabItem.appendChild(createTitleContainer(tab))
-        tabItem.appendChild(createScreenShot(tab))            
-        return tabItem
-    }
-
-    function createTitleContainer(tab) {
-        var container = document.createElement('div')
-        container.classList.add('title-container')
-
-        var favicon = document.createElement('img')
-        favicon.classList.add('favicon')
-
-        favicon.src = tab.favIconUrl || ""
-        favicon.width = 16
-        favicon.height = 16
-        container.appendChild(favicon)
-
-        var title = document.createElement('span')
-        title.innerText = tab.title
-        container.appendChild(title)
-        
-        return container
-    }
-
-    function createScreenShot(tab) {
-        var screenShot = document.createElement('img')
-        screenShot.classList.add('screen-shot')
-        screenShot.src = tab.screenShotDataUrl || ""
-        screenShot.width = TAB_ITEM_WIDTH 
-        screenShot.height = 128 
-
-        return screenShot
-    }
-
-    function calculateRowLength() {  
-        rowLength = Math.floor(iframe.contentDocument.body.offsetWidth / (TAB_ITEM_WIDTH + 2 * TAB_ITEM_BORDER_WIDTH))
-    }    
+    });                            
 };
+
+function createTabItem(tab) {
+    var tabItem = document.createElement('div')
+    tabItem.classList.add('tab-item')
+    tabItem.appendChild(createTitleContainer(tab))
+    tabItem.appendChild(createScreenShot(tab))            
+    return tabItem
+}
+
+function createTitleContainer(tab) {
+    var container = document.createElement('div')
+    container.classList.add('title-container')
+
+    var favicon = document.createElement('img')
+    favicon.classList.add('favicon')
+
+    favicon.src = tab.favIconUrl || ""
+    favicon.width = 16
+    favicon.height = 16
+    container.appendChild(favicon)
+
+    var title = document.createElement('span')
+    title.innerText = tab.title
+    container.appendChild(title)
+    
+    return container
+}
+
+function createScreenShot(tab) {
+    var screenShot = document.createElement('img')
+    screenShot.classList.add('screen-shot')
+    screenShot.src = tab.screenShotDataUrl || ""
+    screenShot.width = TAB_ITEM_WIDTH 
+    screenShot.height = 128 
+
+    return screenShot
+}
+
+function calculateRowLength() {  
+    rowLength = Math.floor(iframe.contentDocument.body.offsetWidth / (TAB_ITEM_WIDTH + 2 * TAB_ITEM_BORDER_WIDTH))
+}
 
 
 TabShepherdKeyHandler.onShow = () =>  {
