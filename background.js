@@ -1,9 +1,3 @@
-chrome.runtime.onInstalled.addListener(() => {
-    chrome.tabs.query({}, tabs => {
-        tabs.forEach(tab => TabShepherd.addFromTab(tab))
-    })
-})
-
 chrome.tabs.onCreated.addListener(tab => {
     TabShepherd.addFromTab(tab)
 })
@@ -34,7 +28,11 @@ chrome.tabs.onRemoved.addListener(tabId => TabShepherd.remove(tabId))
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.getTabs) {
-        sendResponse(TabShepherd.getTabs(sender.tab.windowId))
+        chrome.tabs.query({}, tabs => {
+            TabShepherd.actualize(tabs)
+            sendResponse(TabShepherd.getTabs(sender.tab.windowId))                   
+        })
+        return true
     }
     if (message.selectedTabId) {
         chrome.tabs.update(message.selectedTabId, {active: true, highlighted: true});
@@ -59,17 +57,17 @@ class TabShepherd {
 
     static addFromTab(tab) {
         TabShepherd.__tabs.push({
-            tabId: tab.id,
+            id: tab.id,
             windowId: tab.windowId,
             url: tab.url,
             title: tab.title,
             favIconUrl: tab.favIconUrl,
             timestamp: Date.now()
-        });
+        });    
     }
 
     static update(tabId, {windowId, url, title, favIconUrl, screenShotDataUrl}) {
-        var tab = TabShepherd.__tabs.find(x => x.tabId === tabId)
+        var tab = TabShepherd.__tabs.find(x => x.id === tabId)
         tab.windowId = windowId === undefined ? tab.windowId : windowId
         tab.title = title === undefined ? tab.title : title
         tab.url = url === undefined ? tab.url : url
@@ -79,7 +77,25 @@ class TabShepherd {
     }
 
     static remove(tabId) {
-        TabShepherd.__tabs = TabShepherd.__tabs.filter(x => x.tabId !== tabId);
+        TabShepherd.__tabs = TabShepherd.__tabs.filter(x => x.id !== tabId);
+    }
+
+    static actualize(actualTabs) {
+        for (const actualTab of actualTabs) {
+            const tab = TabShepherd.__tabs.find(x => x.id === actualTab.id)
+
+            if (!tab) {
+                TabShepherd.addFromTab(actualTab)
+                continue
+            }
+                
+            if (tab.url !== actualTab.url) {
+                TabShepherd.update(tab.id, {...actualTab, screenShotDataUrl: null})
+                continue
+            }                
+        }
+
+        TabShepherd.__tabs = TabShepherd.__tabs.filter(tab => !!actualTabs.find(actualTab => tab.id === actualTab.id))
     }
 
     static getTabs(windowId) {

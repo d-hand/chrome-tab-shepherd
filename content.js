@@ -55,6 +55,8 @@ TabShepherdKeyHandler.__init()
         8) строка детализации полный url или title ?)
         9) добваить тень!)
         11) обработать клик мыши 
+        12) переписать background.js чтобы он возвращал всегда только активные вкладки и скрины по ним если есть
+        13) tab ~ ~ ~ nextTab nextTab =)
 */
 
 const TAB_ITEM_WIDTH = 256
@@ -146,8 +148,7 @@ tabList.classList.add('tab-list')
 
 iframe.onload = function() {    
     iframe.contentDocument.getElementsByTagName("head")[0].appendChild(style);    
-    iframe.contentDocument.body.appendChild(tabList)
-    
+    iframe.contentDocument.body.appendChild(tabList)    
     tabList.appendChild(loader);
 
     chrome.runtime.sendMessage(chrome.runtime.id, {getTabs: true}, (response) => {        
@@ -164,7 +165,6 @@ iframe.onload = function() {
         tabItem.appendChild(createTitleContainer(tab))
         tabItem.appendChild(createScreenShot(tab))            
         return tabItem
-
     }
 
     function createTitleContainer(tab) {
@@ -210,7 +210,7 @@ TabShepherdKeyHandler.onHide  = () => {
     tabList.innerHTML = ''
     document.body.removeChild(iframe)
     if (tabs && tabs[selectedIndex])
-        setTimeout(() => chrome.runtime.sendMessage(chrome.runtime.id, { selectedTabId: tabs[selectedIndex].tabId }), 100)
+        setTimeout(() => chrome.runtime.sendMessage(chrome.runtime.id, { selectedTabId: tabs[selectedIndex].id }), 100)
 }
 
 TabShepherdKeyHandler.onArrowRight = () => {
