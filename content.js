@@ -154,17 +154,70 @@ iframe.onload = function() {
     chrome.runtime.sendMessage(chrome.runtime.id, {getTabs: true}, (response) => {        
         tabs = response
         tabList.removeChild(loader)
-        tabs.forEach(tab => tabList.appendChild(createTabItem(tab)))
+        tabs.forEach((tab, index) => tabList.appendChild(createTabItem(tab, index)))
         selectNewTabItem(tabList.children.length > 1 ? 1 : 0)        
         calculateRowLength()
     });                            
 };
 
-function createTabItem(tab) {
+TabShepherdKeyHandler.onShow = () => activateTabShepherd()
+TabShepherdKeyHandler.onHide  = () => switchBrowserTab()
+TabShepherdKeyHandler.onArrowRight = () => selectNextTab() 
+TabShepherdKeyHandler.onArrowLeft = () => selectPreviousTab() 
+TabShepherdKeyHandler.onArrowUp = () => selectTabOnNextRow()
+TabShepherdKeyHandler.onArrowDown = () => selectTabOnPreviousRow()
+
+function activateTabShepherd() {
+    document.body.appendChild(iframe)
+}
+
+function switchBrowserTab() {
+    tabList.innerHTML = ''
+    document.body.removeChild(iframe)
+    if (tabs && tabs[selectedIndex])
+        setTimeout(() => chrome.runtime.sendMessage(chrome.runtime.id, { selectedTabId: tabs[selectedIndex].id }), 100)
+}
+
+function selectNextTab() {
+    selectNewTabItem(selectedIndex + 1)
+}
+
+function selectPreviousTab() {
+    selectNewTabItem(selectedIndex - 1)
+}
+
+function selectTabOnNextRow() {    
+    var newSelectedIndex = selectedIndex - rowLength
+    selectNewTabItem(newSelectedIndex >= 0 ? newSelectedIndex : selectedIndex)            
+}
+
+function selectTabOnPreviousRow() {
+    var newSelectedIndex = selectedIndex + rowLength
+    selectNewTabItem(newSelectedIndex < tabList.children.length ? newSelectedIndex : tabList.children.length - 1)        
+}
+
+function selectNewTabItem(index) {
+    var newSelectedTabItem = tabList.children[index]
+    if (!newSelectedTabItem)
+        return
+
+    var selectedTabItem = tabList.children[selectedIndex]
+    if (selectedTabItem) 
+        selectedTabItem.classList.remove('selected')
+
+    newSelectedTabItem.classList.add('selected')
+    selectedIndex = index    
+}
+
+function createTabItem(tab, index) {
     var tabItem = document.createElement('div')
     tabItem.classList.add('tab-item')
     tabItem.appendChild(createTitleContainer(tab))
-    tabItem.appendChild(createScreenShot(tab))            
+    tabItem.appendChild(createScreenShot(tab))
+    tabItem.onclick = () => {
+        selectNewTabItem(index)
+        switchBrowserTab()
+    }      
     return tabItem
 }
 
@@ -199,47 +252,4 @@ function createScreenShot(tab) {
 
 function calculateRowLength() {  
     rowLength = Math.floor(iframe.contentDocument.body.offsetWidth / (TAB_ITEM_WIDTH + 2 * TAB_ITEM_BORDER_WIDTH))
-}
-
-
-TabShepherdKeyHandler.onShow = () =>  {
-    document.body.appendChild(iframe)
-}
-
-TabShepherdKeyHandler.onHide  = () => {
-    tabList.innerHTML = ''
-    document.body.removeChild(iframe)
-    if (tabs && tabs[selectedIndex])
-        setTimeout(() => chrome.runtime.sendMessage(chrome.runtime.id, { selectedTabId: tabs[selectedIndex].id }), 100)
-}
-
-TabShepherdKeyHandler.onArrowRight = () => {
-    selectNewTabItem(selectedIndex + 1)
-}
-
-TabShepherdKeyHandler.onArrowLeft = () => {
-    selectNewTabItem(selectedIndex - 1)
-}
-
-TabShepherdKeyHandler.onArrowUp = () => {
-    var newSelectedIndex = selectedIndex - rowLength
-    selectNewTabItem(newSelectedIndex >= 0 ? newSelectedIndex : selectedIndex)    
-}
-
-TabShepherdKeyHandler.onArrowDown = () => {
-    var newSelectedIndex = selectedIndex + rowLength
-    selectNewTabItem(newSelectedIndex < tabList.children.length ? newSelectedIndex : tabList.children.length - 1)
-}
-
-function selectNewTabItem(index) {
-    var newSelectedTabItem = tabList.children[index]
-    if (!newSelectedTabItem)
-        return
-
-    var selectedTabItem = tabList.children[selectedIndex]
-    if (selectedTabItem) 
-        selectedTabItem.classList.remove('selected')
-
-    newSelectedTabItem.classList.add('selected')
-    selectedIndex = index    
 }
