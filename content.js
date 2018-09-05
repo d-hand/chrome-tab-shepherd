@@ -24,7 +24,12 @@ class TabShepherdKeyHandler {
             TabShepherdKeyHandler.__wasShown = true
             TabShepherdKeyHandler.onShow()
             e.stopPropagation()
-        } 
+        }
+
+        if (TabShepherdKeyHandler.__wasShown && e.code === "Backquote"){
+            TabShepherdKeyHandler.onArrowRight()
+            e.stopPropagation()
+        }
 
         if (TabShepherdKeyHandler.__wasShown && TabShepherdKeyHandler.arrowHandlerMap[e.code]) {
             TabShepherdKeyHandler.arrowHandlerMap[e.code]()
