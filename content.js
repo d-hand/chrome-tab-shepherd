@@ -7,7 +7,7 @@ class TabShepherdKeyHandler {
         TabShepherdKeyHandler.onArrowUp = () => {}
         TabShepherdKeyHandler.onArrowDown = () => {}                
 
-        TabShepherdKeyHandler.__wasShown = false
+        TabShepherdKeyHandler.__wasShowed = false
         TabShepherdKeyHandler.arrowHandlerMap = {
             ArrowUp: () => TabShepherdKeyHandler.onArrowUp(),
             ArrowDown: () => TabShepherdKeyHandler.onArrowDown(),            
@@ -20,33 +20,31 @@ class TabShepherdKeyHandler {
     }
 
     static __documentOnKeyDown(e) {
-        if (e.code === "Backquote" && e.ctrlKey === true && !TabShepherdKeyHandler.__wasShown) {
-            TabShepherdKeyHandler.__wasShown = true
+        if (e.code === "Backquote" && e.ctrlKey === true && !TabShepherdKeyHandler.__wasShowed) {
+            TabShepherdKeyHandler.__wasShowed = true
             TabShepherdKeyHandler.onShow()
             e.stopPropagation()
         }
 
-        if (TabShepherdKeyHandler.__wasShown && e.code === "Backquote"){
+        if (TabShepherdKeyHandler.__wasShowed && e.code === "Backquote"){
             TabShepherdKeyHandler.onArrowRight()
             e.stopPropagation()
         }
 
-        if (TabShepherdKeyHandler.__wasShown && TabShepherdKeyHandler.arrowHandlerMap[e.code]) {
+        if (TabShepherdKeyHandler.__wasShowed && TabShepherdKeyHandler.arrowHandlerMap[e.code]) {
             TabShepherdKeyHandler.arrowHandlerMap[e.code]()
             e.stopPropagation()
         }
     }
 
     static __documentOnKeyUp(e) {
-        if (TabShepherdKeyHandler.__wasShown &&  e.key === "Control") {
-            TabShepherdKeyHandler.__wasShown = false
+        if (TabShepherdKeyHandler.__wasShowed &&  e.key === "Control") {
+            TabShepherdKeyHandler.__wasShowed = false
             TabShepherdKeyHandler.onHide()
         }
     }
 }
 TabShepherdKeyHandler.__init()
-
-//debugger;
 
 /*
     TODO 
@@ -167,8 +165,8 @@ TabShepherdKeyHandler.onShow = () => activateTabShepherd()
 TabShepherdKeyHandler.onHide  = () => switchBrowserTab()
 TabShepherdKeyHandler.onArrowRight = () => selectNextTab() 
 TabShepherdKeyHandler.onArrowLeft = () => selectPreviousTab() 
-TabShepherdKeyHandler.onArrowUp = () => selectTabOnNextRow()
-TabShepherdKeyHandler.onArrowDown = () => selectTabOnPreviousRow()
+TabShepherdKeyHandler.onArrowUp = () => selectTabOnPreviousRow()
+TabShepherdKeyHandler.onArrowDown = () => selectTabOnNextRow()
 
 function activateTabShepherd() {
     document.body.appendChild(iframe)
@@ -189,14 +187,20 @@ function selectPreviousTab() {
     selectNewTabItem(selectedIndex - 1)
 }
 
-function selectTabOnNextRow() {    
-    var newSelectedIndex = selectedIndex - rowLength
+function selectTabOnPreviousRow() {
+    var lastRowLength = tabs.length % rowLength || rowLength
+    var selectedRowLength = selectedIndex > tabs.length - lastRowLength - 1 ? lastRowLength : rowLength
+    var offset = Math.round((rowLength + selectedRowLength) / 2)
+    var newSelectedIndex = selectedIndex - offset
     selectNewTabItem(newSelectedIndex >= 0 ? newSelectedIndex : selectedIndex)            
 }
 
-function selectTabOnPreviousRow() {
-    var newSelectedIndex = selectedIndex + rowLength
-    selectNewTabItem(newSelectedIndex < tabList.children.length ? newSelectedIndex : tabList.children.length - 1)        
+function selectTabOnNextRow() {
+    var lastRowLength = tabs.length % rowLength || rowLength
+    var targetRowLength = selectedIndex + rowLength > tabs.length - lastRowLength - 1 ? lastRowLength : rowLength
+    var offset = Math.round((rowLength + targetRowLength) / 2)
+    var newSelectedIndex = selectedIndex + offset
+    selectNewTabItem(newSelectedIndex < tabs.length ? newSelectedIndex : sele)        
 }
 
 function selectNewTabItem(index) {
