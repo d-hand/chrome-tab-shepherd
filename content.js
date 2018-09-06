@@ -48,7 +48,6 @@ TabShepherdKeyHandler.__init()
 
 /*
     TODO 
-        0) сделать нормальный переход с предпоследнией на последню вкладку
         1) подобрать огненный шрифт
         2) переписать это говно на риакт (c Webpack-окм кончено)
         3) дефолтный favicon и screenShot
@@ -58,6 +57,7 @@ TabShepherdKeyHandler.__init()
         8) строка детализации полный url или title ?)
         9) добваить тень!)        
         14) подумать над установкой (обновить все вкладки или фоном выполнить скрипт или...)
+        15) баг selectedTab всегда должна быть самой первой =) 
 */
 
 const TAB_ITEM_WIDTH = 256
@@ -188,19 +188,15 @@ function selectPreviousTab() {
 }
 
 function selectTabOnPreviousRow() {
-    var lastRowLength = tabs.length % rowLength || rowLength
-    var selectedRowLength = selectedIndex > tabs.length - lastRowLength - 1 ? lastRowLength : rowLength
-    var offset = Math.round((rowLength + selectedRowLength) / 2)
-    var newSelectedIndex = selectedIndex - offset
-    selectNewTabItem(newSelectedIndex >= 0 ? newSelectedIndex : selectedIndex)            
+    let end = (Math.floor((selectedIndex) / rowLength)) * rowLength - 1
+    let newIndex = findClosestTab(0, end)
+    newIndex !== undefined && selectNewTabItem(newIndex)
 }
 
 function selectTabOnNextRow() {
-    var lastRowLength = tabs.length % rowLength || rowLength
-    var targetRowLength = selectedIndex + rowLength > tabs.length - lastRowLength - 1 ? lastRowLength : rowLength
-    var offset = Math.round((rowLength + targetRowLength) / 2)
-    var newSelectedIndex = selectedIndex + offset
-    selectNewTabItem(newSelectedIndex < tabs.length ? newSelectedIndex : sele)        
+    let start = (Math.floor((selectedIndex) / rowLength) + 1) * rowLength
+    let newIndex = findClosestTab(start, tabs.length - 1)
+    newIndex !== undefined && selectNewTabItem(newIndex)
 }
 
 function selectNewTabItem(index) {
@@ -214,6 +210,25 @@ function selectNewTabItem(index) {
 
     newSelectedTabItem.classList.add('selected')
     selectedIndex = index    
+}
+
+function findClosestTab(start, end) {
+    if (start < 0 || start >= tabs.length || end < 0 || end >= tabs.length || start > end)
+        return
+
+    let index, 
+        distance = Number.MAX_VALUE,
+        selectedRect = tabList.children[selectedIndex].getBoundingClientRect()
+
+    for (let i = start; i <= end; i++) {
+        let rect = tabList.children[i].getBoundingClientRect()
+        let newDistance = Math.sqrt(Math.pow(selectedRect.left - rect.left, 2) +  Math.pow(selectedRect.top - rect.top, 2))
+        if (newDistance < distance) {
+            index = i
+            distance = newDistance 
+        }
+    }
+    return index
 }
 
 function createTabItem(tab, index) {
