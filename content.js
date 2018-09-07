@@ -26,8 +26,12 @@ class TabShepherdKeyHandler {
             e.stopPropagation()
         }
 
-        if (TabShepherdKeyHandler.__wasShowed && e.code === "Backquote"){
-            TabShepherdKeyHandler.onArrowRight()
+        if (TabShepherdKeyHandler.__wasShowed && e.code === "Backquote") {
+            if (e.shiftKey)
+                TabShepherdKeyHandler.onArrowLeft()
+            else
+                TabShepherdKeyHandler.onArrowRight()
+                
             e.stopPropagation()
         }
 
@@ -63,11 +67,11 @@ TabShepherdKeyHandler.__init()
 const TAB_ITEM_WIDTH = 256
 const TAB_ITEM_BORDER_WIDTH = 2
 
-var tabs = undefined
-var rowLength = undefined
-var selectedIndex = undefined
+let tabs = undefined
+let rowLength = undefined
+let selectedIndex = undefined
 
-var iframe = document.createElement('iframe')
+let iframe = document.createElement('iframe')
 iframe.style.cssText = `
     position: fixed;
     top: 5%;
@@ -80,7 +84,7 @@ iframe.style.cssText = `
     border-radius: 15px;
 `
 
-var style = document.createElement('style');
+let style = document.createElement('style');
 style.type = 'text/css';
 style.appendChild(document.createTextNode(`
     .loader {
@@ -114,11 +118,12 @@ style.appendChild(document.createTextNode(`
         background: rgba(0, 0, 0, 0.0);
         width: ${TAB_ITEM_WIDTH}px;
         border: ${TAB_ITEM_BORDER_WIDTH}px solid black;
-        border-radius: 15px;       
+        border-radius: 15px;
+        margin: 10px;
     }
 
     .tab-item.selected {
-        border-color: blue;
+        border-color: white;
     }
 
     .title-container {
@@ -131,6 +136,10 @@ style.appendChild(document.createTextNode(`
         text-overflow: ellipsis;    /* Добавляем многоточие */
     }
 
+    .tab-item.selected .title-container {
+        background: white;
+    }
+
     .favicon {
         margin-right: 4px;
     }
@@ -141,10 +150,10 @@ style.appendChild(document.createTextNode(`
     
 `));
 
-var loader = document.createElement('div')
+let loader = document.createElement('div')
 loader.classList.add('loader')
 
-var tabList = document.createElement('div')
+let tabList = document.createElement('div')
 tabList.classList.add('tab-list')
 
 iframe.onload = function() {    
@@ -189,22 +198,24 @@ function selectPreviousTab() {
 
 function selectTabOnPreviousRow() {
     let end = (Math.floor((selectedIndex) / rowLength)) * rowLength - 1
-    let newIndex = findClosestTab(0, end)
+    let start = end - rowLength >= 0 ? end - rowLength : 0
+    let newIndex = findClosestTab(start, end)
     newIndex !== undefined && selectNewTabItem(newIndex)
 }
 
 function selectTabOnNextRow() {
     let start = (Math.floor((selectedIndex) / rowLength) + 1) * rowLength
+    let end = start + rowLength < tabs.length ? start + rowLength : tabs.length - 1 
     let newIndex = findClosestTab(start, tabs.length - 1)
     newIndex !== undefined && selectNewTabItem(newIndex)
 }
 
 function selectNewTabItem(index) {
-    var newSelectedTabItem = tabList.children[index]
+    let newSelectedTabItem = tabList.children[index]
     if (!newSelectedTabItem)
         return
 
-    var selectedTabItem = tabList.children[selectedIndex]
+    let selectedTabItem = tabList.children[selectedIndex]
     if (selectedTabItem) 
         selectedTabItem.classList.remove('selected')
 
@@ -232,7 +243,7 @@ function findClosestTab(start, end) {
 }
 
 function createTabItem(tab, index) {
-    var tabItem = document.createElement('div')
+    let tabItem = document.createElement('div')
     tabItem.classList.add('tab-item')
     tabItem.appendChild(createTitleContainer(tab))
     tabItem.appendChild(createScreenShot(tab))
@@ -244,18 +255,18 @@ function createTabItem(tab, index) {
 }
 
 function createTitleContainer(tab) {
-    var container = document.createElement('div')
+    let container = document.createElement('div')
     container.classList.add('title-container')
 
-    var favicon = document.createElement('img')
+    let favicon = document.createElement('img')
     favicon.classList.add('favicon')
 
     favicon.src = tab.favIconUrl || ""
-    favicon.width = 16
-    favicon.height = 16
+    favicon.width = 24
+    favicon.height = 24
     container.appendChild(favicon)
 
-    var title = document.createElement('span')
+    let title = document.createElement('span')
     title.innerText = tab.title
     container.appendChild(title)
     
@@ -263,7 +274,7 @@ function createTitleContainer(tab) {
 }
 
 function createScreenShot(tab) {
-    var screenShot = document.createElement('img')
+    let screenShot = document.createElement('img')
     screenShot.classList.add('screen-shot')
     screenShot.src = tab.screenShotDataUrl || ""
     screenShot.width = TAB_ITEM_WIDTH 
