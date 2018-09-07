@@ -31,7 +31,7 @@ class TabShepherdKeyHandler {
                 TabShepherdKeyHandler.onArrowLeft()
             else
                 TabShepherdKeyHandler.onArrowRight()
-                
+
             e.stopPropagation()
         }
 
@@ -128,7 +128,7 @@ style.appendChild(document.createTextNode(`
 
     .title-container {
         background: #cecece;
-        border-bottom: 1px solid black;
+        /*border-bottom: 1px solid black;*/
         border-radius: 15px 15px 0px 0px;
         padding: 3%;
         white-space: nowrap;        /* Запрещаем перенос строк */
