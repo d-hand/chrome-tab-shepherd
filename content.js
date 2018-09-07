@@ -58,7 +58,6 @@ TabShepherdKeyHandler.__init()
         - дефолтный favicon и screenShot
         - что-то сделать со скринами... мелко не видно ничего?
         - выравнить title по середине favicon-а?
-        - что делать если вкладок слишком много ?)
         - строка детализации полный url или title ?)
         - подумать над установкой (обновить все вкладки или фоном выполнить скрипт или...)
         - баг selectedTab всегда должна быть самой первой =) 
@@ -102,7 +101,7 @@ style.appendChild(document.createTextNode(`
 
     .tab-list {
         width: 100%;
-        height: 100%;
+        min-height: 100%;
     
         display: flex;
         flex-direction: row;                
@@ -220,6 +219,10 @@ function selectNewTabItem(index) {
         selectedTabItem.classList.remove('selected')
 
     newSelectedTabItem.classList.add('selected')
+    newSelectedTabItem.scrollIntoView({
+        behavior: "smooth", //"auto"  | "instant" | "smooth",
+        block:    "end"//"start" | "end",
+    })
     selectedIndex = index    
 }
 
