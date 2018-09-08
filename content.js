@@ -52,20 +52,14 @@ TabShepherdKeyHandler.__init()
 
 /*
     TODO 
-        - разобрать rowLength он не нужен
         - тормозит когда много вкладок =(
         - переписать это говно на риакт (c Webpack-окм кончено)
         - подобрать огненный шрифт        
         - строка детализации полный url или title ?)
         - подумать над установкой (обновить все вкладки или фоном выполнить скрипт или...)
-        - баг selectedTab всегда должна быть самой первой =) 
 */
 
-const TAB_ITEM_WIDTH = 300
-const TAB_ITEM_BORDER_WIDTH = 2
-
 let tabs = undefined
-let rowLength = undefined
 let selectedIndex = undefined
 
 let iframe = document.createElement('iframe')
@@ -115,8 +109,8 @@ style.appendChild(document.createTextNode(`
     }
 
     .tab-list-item {                
-        width: ${TAB_ITEM_WIDTH}px;
-        border: ${TAB_ITEM_BORDER_WIDTH}px solid black;
+        width: 300px;
+        border: 2px solid black;
         background: #cecece;
         border-radius: 15px;
         margin: 10px;
@@ -166,8 +160,7 @@ iframe.onload = function() {
         tabs = response
         tabList.removeChild(loader)
         tabs.forEach((tab, index) => tabList.appendChild(createTabItem(tab, index)))
-        selectNewTabItem(tabList.children.length > 1 ? 1 : 0)        
-        calculateRowLength()
+        selectNewTabItem(tabList.children.length > 1 ? 1 : 0)
     });                            
 };
 
@@ -198,16 +191,12 @@ function selectPreviousTab() {
 }
 
 function selectTabOnPreviousRow() {
-    let end = (Math.floor((selectedIndex) / rowLength)) * rowLength - 1
-    let start = end - rowLength >= 0 ? end - rowLength : 0
-    let newIndex = findClosestTab(start, end)
+    let newIndex = findClosestTab(true)
     newIndex !== undefined && selectNewTabItem(newIndex)
 }
 
 function selectTabOnNextRow() {
-    let start = (Math.floor((selectedIndex) / rowLength) + 1) * rowLength
-    let end = start + rowLength < tabs.length ? start + rowLength : tabs.length - 1 
-    let newIndex = findClosestTab(start, end)
+    let newIndex = findClosestTab(false)
     newIndex !== undefined && selectNewTabItem(newIndex)
 }
 
@@ -228,11 +217,10 @@ function selectNewTabItem(index) {
     selectedIndex = index    
 }
 
-function findClosestTab(start, end) {
-    if (start < 0 || start >= tabs.length || end < 0 || end >= tabs.length || start > end)
-        return
-
+function findClosestTab(below) {
     let index, 
+        start = below ? 0 : selectedIndex + 1,
+        end = below ? selectedIndex - 1 : tabs.length - 1, 
         distance = Number.MAX_VALUE,
         selectedRect = tabList.children[selectedIndex].getBoundingClientRect()
 
@@ -283,8 +271,4 @@ function createScreenShot(tab) {
     screenShot.classList.add('tab-list-item-screen-shot')
     screenShot.src = tab.screenShotDataUrl;
     return screenShot
-}
-
-function calculateRowLength() {  
-    rowLength = Math.floor(iframe.contentDocument.body.offsetWidth / (TAB_ITEM_WIDTH + 2 * TAB_ITEM_BORDER_WIDTH))
 }
