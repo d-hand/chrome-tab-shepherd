@@ -52,6 +52,8 @@ TabShepherdKeyHandler.__init()
 
 /*
     TODO 
+        - разобрать rowLength он не нужен
+        - тормозит когда много вкладок =(
         - переписать это говно на риакт (c Webpack-окм кончено)
         - подобрать огненный шрифт        
         - строка детализации полный url или title ?)
@@ -122,7 +124,8 @@ style.appendChild(document.createTextNode(`
 
     .tab-list-item-selected {
         background: white !important;
-        border-color: white !important;        
+        border-color: white !important;
+        box-shadow: 0px 0px 50px 30px rgba(255,255,255,0.8);
     }
 
     .tab-list-item-title {        
