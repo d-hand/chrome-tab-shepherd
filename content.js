@@ -248,7 +248,8 @@ function createTabItem(tab, index) {
     tab.screenShotDataUrl && tabItem.appendChild(createScreenShot(tab))
     tabItem.onclick = () => {
         selectNewTabItem(index)
-        switchBrowserTab()
+        setTimeout(switchBrowserTab, 100)
+
     }      
     return tabItem
 }
