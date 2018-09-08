@@ -52,18 +52,15 @@ TabShepherdKeyHandler.__init()
 
 /*
     TODO 
-        - screenShot.height вычислять на основании TAB_ITEM_WIDTH и размера окна
-        - подобрать огненный шрифт
         - переписать это говно на риакт (c Webpack-окм кончено)
-        - дефолтный favicon и screenShot
-        - что-то сделать со скринами... мелко не видно ничего?
+        - подобрать огненный шрифт        
         - выравнить title по середине favicon-а?
         - строка детализации полный url или title ?)
         - подумать над установкой (обновить все вкладки или фоном выполнить скрипт или...)
         - баг selectedTab всегда должна быть самой первой =) 
 */
 
-const TAB_ITEM_WIDTH = 256
+const TAB_ITEM_WIDTH = 300
 const TAB_ITEM_BORDER_WIDTH = 2
 
 let tabs = undefined
@@ -78,7 +75,7 @@ iframe.style.cssText = `
     width: 90%;
     height: 90%;
     z-index: 2147483647;
-    background: rgba(128, 128, 128, 0.7);
+    background: rgba(128, 128, 128, 0.8);
     /*border: 0;*/
     border-radius: 15px;
 `
@@ -86,6 +83,10 @@ iframe.style.cssText = `
 let style = document.createElement('style');
 style.type = 'text/css';
 style.appendChild(document.createTextNode(`
+    body {
+        overflow: hidden;
+    }
+
     .loader {
         border: 16px solid #f3f3f3;
         border-radius: 50%;
@@ -102,51 +103,46 @@ style.appendChild(document.createTextNode(`
     .tab-list {
         width: 100%;
         min-height: 100%;
-    
+        background:  rgba(0, 0, 0, 0.0);    
+
         display: flex;
         flex-direction: row;                
         flex-wrap: wrap;                    /* Переносить элементы wrap или нет nowrap (еще бывыает wrap-reverse) */
         justify-content: space-around;      /* выравнивает flex-элементы по главной оси текущей строки flex-контейнера */
         align-items: center;                /* Flex-ЭЛЕМЕНТЫ могут быть выровнены вдоль поперечной оси текущей строки flex-контейнера, подобно justify-content, но в перпендикулярном направлении.*/
         align-content: space-around;        /* Выравнивает СТРОКИ flex-контейнера во flex-контейнере, когда есть дополнительное пространство по поперечной оси, подобно тому,  как justify-content выравнивает отдельные элементы по главной оси. */   
-    
-        background:  rgba(0, 0, 0, 0.0);    
     }
 
-    .tab-item {
-        background: rgba(0, 0, 0, 0.0);
+    .tab-list-item {                
         width: ${TAB_ITEM_WIDTH}px;
         border: ${TAB_ITEM_BORDER_WIDTH}px solid black;
+        background: #cecece;
         border-radius: 15px;
         margin: 10px;
     }
 
-    .tab-item.selected {
-        border-color: white;
+    .tab-list-item-selected {
+        background: white !important;
+        border-color: white !important;        
     }
 
-    .title-container {
-        background: #cecece;
-        /*border-bottom: 1px solid black;*/
-        border-radius: 15px 15px 0px 0px;
+    .tab-list-item-title {        
         padding: 3%;
         white-space: nowrap;        /* Запрещаем перенос строк */
         overflow: hidden;           /* Обрезаем все, что не помещается в область */
         text-overflow: ellipsis;    /* Добавляем многоточие */
     }
 
-    .tab-item.selected .title-container {
-        background: white;
-    }
-
-    .favicon {
+    .tab-list-item-favicon {
         margin-right: 4px;
     }
 
-    .screen-shot {
-        border-radius: 0px 0px 15px 15px;
-    }
-    
+    .tab-list-item-screen-shot {
+        border-bottom-left-radius: inherit;
+        border-bottom-right-radius: inherit;
+        width: inherit;
+        height: auto;
+    }    
 `));
 
 let loader = document.createElement('div')
@@ -205,7 +201,7 @@ function selectTabOnPreviousRow() {
 function selectTabOnNextRow() {
     let start = (Math.floor((selectedIndex) / rowLength) + 1) * rowLength
     let end = start + rowLength < tabs.length ? start + rowLength : tabs.length - 1 
-    let newIndex = findClosestTab(start, tabs.length - 1)
+    let newIndex = findClosestTab(start, end)
     newIndex !== undefined && selectNewTabItem(newIndex)
 }
 
@@ -216,12 +212,12 @@ function selectNewTabItem(index) {
 
     let selectedTabItem = tabList.children[selectedIndex]
     if (selectedTabItem) 
-        selectedTabItem.classList.remove('selected')
+        selectedTabItem.classList.remove('tab-list-item-selected')
 
-    newSelectedTabItem.classList.add('selected')
+    newSelectedTabItem.classList.add('tab-list-item-selected')
     newSelectedTabItem.scrollIntoView({
-        behavior: "smooth", //"auto"  | "instant" | "smooth",
-        block:    "end"//"start" | "end",
+        behavior: "smooth",     //"auto"  | "instant" | "smooth",
+        block:    "end"         //"start" | "end",
     })
     selectedIndex = index    
 }
@@ -247,9 +243,9 @@ function findClosestTab(start, end) {
 
 function createTabItem(tab, index) {
     let tabItem = document.createElement('div')
-    tabItem.classList.add('tab-item')
+    tabItem.classList.add('tab-list-item')
     tabItem.appendChild(createTitleContainer(tab))
-    tabItem.appendChild(createScreenShot(tab))
+    tab.screenShotDataUrl && tabItem.appendChild(createScreenShot(tab))
     tabItem.onclick = () => {
         selectNewTabItem(index)
         switchBrowserTab()
@@ -259,30 +255,28 @@ function createTabItem(tab, index) {
 
 function createTitleContainer(tab) {
     let container = document.createElement('div')
-    container.classList.add('title-container')
+    container.classList.add('tab-list-item-title')
 
     let favicon = document.createElement('img')
-    favicon.classList.add('favicon')
+    favicon.classList.add('tab-list-item-favicon')
 
-    favicon.src = tab.favIconUrl || ""
-    favicon.width = 24
-    favicon.height = 24
-    container.appendChild(favicon)
+    if (tab.favIconUrl) {
+        favicon.src = tab.favIconUrl
+        favicon.width = 24
+        favicon.height = 24
+        tab.favIconUrl && container.appendChild(favicon)    
+    }
 
     let title = document.createElement('span')
     title.innerText = tab.title
-    container.appendChild(title)
-    
+    container.appendChild(title)    
     return container
 }
 
 function createScreenShot(tab) {
     let screenShot = document.createElement('img')
-    screenShot.classList.add('screen-shot')
-    screenShot.src = tab.screenShotDataUrl || ""
-    screenShot.width = TAB_ITEM_WIDTH 
-    screenShot.height = 128 
-
+    screenShot.classList.add('tab-list-item-screen-shot')
+    screenShot.src = tab.screenShotDataUrl;
     return screenShot
 }
 
