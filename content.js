@@ -127,13 +127,16 @@ style.appendChild(document.createTextNode(`
     }
 
     .tab-list-item-title {        
+        height: 24px;
         padding: 3%;
         white-space: nowrap;        /* Запрещаем перенос строк */
         overflow: hidden;           /* Обрезаем все, что не помещается в область */
         text-overflow: ellipsis;    /* Добавляем многоточие */
     }
 
-    .tab-list-item-favicon {
+    .tab-list-item-title-favicon {
+        height: inherit;
+        width: auto;        
         margin-right: 4px;
     }
 
@@ -255,23 +258,21 @@ function createTabItem(tab, index) {
 }
 
 function createTitleContainer(tab) {
-    let container = document.createElement('div')
-    container.classList.add('tab-list-item-title')
+    let title = document.createElement('div')
+    title.classList.add('tab-list-item-title')
 
     let favicon = document.createElement('img')
-    favicon.classList.add('tab-list-item-favicon')
+    favicon.classList.add('tab-list-item-title-favicon')
 
     if (tab.favIconUrl) {
         favicon.src = tab.favIconUrl
-        favicon.width = 24
-        favicon.height = 24
-        tab.favIconUrl && container.appendChild(favicon)    
+        title.appendChild(favicon)    
     }
 
-    let title = document.createElement('span')
-    title.innerText = tab.title
-    container.appendChild(title)    
-    return container
+    let titleText = document.createElement('span')
+    titleText.innerText = tab.title
+    title.appendChild(titleText)
+    return title
 }
 
 function createScreenShot(tab) {
