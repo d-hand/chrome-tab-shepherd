@@ -54,7 +54,6 @@ TabShepherdKeyHandler.__init()
     TODO 
         - переписать это говно на риакт (c Webpack-окм кончено)
         - подобрать огненный шрифт        
-        - выравнить title по середине favicon-а?
         - строка детализации полный url или title ?)
         - подумать над установкой (обновить все вкладки или фоном выполнить скрипт или...)
         - баг selectedTab всегда должна быть самой первой =) 
@@ -138,6 +137,7 @@ style.appendChild(document.createTextNode(`
         height: inherit;
         width: auto;        
         margin-right: 4px;
+        vertical-align: middle;
     }
 
     .tab-list-item-screen-shot {
