@@ -71,7 +71,6 @@ iframe.style.cssText = `
     height: 90%;
     z-index: 2147483647;
     background: rgba(128, 128, 128, 0.8);
-    /*border: 0;*/
     border-radius: 15px;
 `
 
@@ -109,7 +108,7 @@ style.appendChild(document.createTextNode(`
     }
 
     .tab-list-item {                
-        width: 300px;
+        width: 20%;
         border: 2px solid black;
         background: #cecece;
         border-radius: 15px;
@@ -131,8 +130,6 @@ style.appendChild(document.createTextNode(`
     }
 
     .tab-list-item-title-favicon {
-        height: inherit;
-        width: auto;        
         margin-right: 4px;
         vertical-align: middle;
     }
@@ -140,7 +137,7 @@ style.appendChild(document.createTextNode(`
     .tab-list-item-screen-shot {
         border-bottom-left-radius: inherit;
         border-bottom-right-radius: inherit;
-        width: inherit;
+        width: 100%;
         height: auto;
     }    
 `));
@@ -222,10 +219,13 @@ function findClosestTab(below) {
         start = below ? 0 : selectedIndex + 1,
         end = below ? selectedIndex - 1 : tabs.length - 1, 
         distance = Number.MAX_VALUE,
-        selectedRect = tabList.children[selectedIndex].getBoundingClientRect()
+        selectedRect = tabList.children[selectedIndex].getBoundingClientRect(),
+        heightRow = selectedRect.bottom - selectedRect.top
 
     for (let i = start; i <= end; i++) {
         let rect = tabList.children[i].getBoundingClientRect()
+        if (Math.abs(selectedRect.top - rect.top) < heightRow)
+            continue
         let newDistance = Math.sqrt(Math.pow(selectedRect.left - rect.left, 2) +  Math.pow(selectedRect.top - rect.top, 2))
         if (newDistance < distance) {
             index = i
