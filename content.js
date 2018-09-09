@@ -55,7 +55,6 @@ TabShepherdKeyHandler.__init()
         - тормозит когда много вкладок =(
         - переписать это говно на риакт (c Webpack-окм кончено)
         - подобрать огненный шрифт        
-        - строка детализации полный url или title ?)
         - подумать над установкой (обновить все вкладки или фоном выполнить скрипт или...)
 */
 
@@ -130,6 +129,7 @@ style.appendChild(document.createTextNode(`
     }
 
     .tab-list-item-title-favicon {
+        height: 100%;
         margin-right: 4px;
         vertical-align: middle;
     }
