@@ -8,7 +8,6 @@ class PastureKeyHandler {
         }
 
         window.addEventListener('keydown', e => this.__documentOnKeyDown(e), true)
-        window.addEventListener('keyup', e => this.__documentOnKeyUp(e), true)
     }
 
     __documentOnKeyDown(e) {
@@ -31,25 +30,20 @@ class PastureKeyHandler {
 let tabs = undefined
 let selectedIndex = undefined
 
-let loader = document.createElement('div')
-loader.classList.add('loader')
-
 let tabList = document.createElement('div')
 tabList.classList.add('tab-list')
+document.body.appendChild(tabList)
 
-
-document.addEventListener('DOMContentLoaded', function () {
-    document.body.appendChild(tabList)
-    tabList.appendChild(loader);
-    chrome.windows.getCurrent(w => {
-        chrome.runtime.getBackgroundPage(function (bg) {
-            tabs = bg.tabShepherd.getTabs(w.id)
-            tabList.removeChild(loader)
+chrome.windows.getCurrent(window => {
+    chrome.runtime.getBackgroundPage(function ({tabShepherd}) {
+        chrome.tabs.query({}, actualTabs => {
+            tabShepherd.actualize(actualTabs)
+            tabs = tabShepherd.getTabs(window.id)
             tabs.forEach((tab, index) => tabList.appendChild(createTabItem(tab, index)))
             selectNewTabItem(tabList.children.length > 1 ? 1 : 0)
-        });    
-    })
-});
+        })
+    })    
+})
 
 var pastureKeyHandler = new PastureKeyHandler()
 pastureKeyHandler.onArrowRight = () => selectNextTab() 
