@@ -1,36 +1,97 @@
+class TabShepherd {
+    constructor() {
+        this.__tabs = [];
+    }
+
+    addFromTab(tab) {
+        this.__tabs.push({
+            id: tab.id,
+            windowId: tab.windowId,
+            url: tab.url,
+            title: tab.title,
+            favIconUrl: tab.favIconUrl,
+            timestamp: Date.now()
+        });    
+    }
+
+    update(tabId, {windowId, url, title, favIconUrl, screenShotDataUrl}) {
+        var tab = this.__tabs.find(x => x.id === tabId)
+        tab.windowId = windowId === undefined ? tab.windowId : windowId
+        tab.title = title === undefined ? tab.title : title
+        tab.url = url === undefined ? tab.url : url
+        tab.favIconUrl = favIconUrl === undefined ? tab.favIconUrl : favIconUrl
+        tab.screenShotDataUrl = screenShotDataUrl === undefined ? tab.screenShotDataUrl : screenShotDataUrl
+        tab.timestamp = Date.now()
+    }
+
+    remove(tabId) {
+        this.__tabs = this.__tabs.filter(x => x.id !== tabId);
+    }
+
+    actualize(actualTabs) {
+        for (const actualTab of actualTabs) {
+            const tab = this.__tabs.find(x => x.id === actualTab.id)
+
+            if (!tab) {
+                this.addFromTab(actualTab)
+                continue
+            }
+                
+            if (tab.url !== actualTab.url) {
+                this.update(tab.id, {...actualTab, screenShotDataUrl: null})
+                continue
+            }                
+        }
+
+        this.__tabs = this.__tabs.filter(tab => !!actualTabs.find(actualTab => tab.id === actualTab.id))
+    }
+
+    getTabs(windowId) {
+        return this.__tabs
+            .filter(tab => tab.windowId === windowId)
+            .sort((tab1, tab2) => tab2.timestamp - tab1.timestamp)
+    }
+}
+
+var tabShepherd = new TabShepherd();
+
+chrome.browserAction.onClicked.addListener(function() {   
+    chrome.tabs.create({url: chrome.extension.getURL('pasture.html')});    
+});
+
 chrome.tabs.onCreated.addListener(tab => {
-    TabShepherd.addFromTab(tab)
+    tabShepherd.addFromTab(tab)
 })
 
 chrome.tabs.onActivated.addListener(({tabId, windowId}) => {
     makeScreenShot(tabId, windowId, screenShotDataUrl => {
-        TabShepherd.update(tabId, {screenShotDataUrl})
+        tabShepherd.update(tabId, {screenShotDataUrl})
     })
 })
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, {windowId, url, title, favIconUrl}) => {
     if (changeInfo.status === 'complete') {
         makeScreenShot(tabId, windowId, screenShotDataUrl => {
-            TabShepherd.update(tabId, {url, title, favIconUrl, screenShotDataUrl})
+            tabShepherd.update(tabId, {url, title, favIconUrl, screenShotDataUrl})
         })
     }
 })
 
 chrome.tabs.onDetached.addListener((tabId) => {
-    TabShepherd.update(tabId, {windowId: null})
+    tabShepherd.update(tabId, {windowId: null})
 })
 
 chrome.tabs.onAttached.addListener((tabId, {newWindowId}) => {
-    TabShepherd.update(tabId, {windowId: newWindowId})
+    tabShepherd.update(tabId, {windowId: newWindowId})
 })
 
-chrome.tabs.onRemoved.addListener(tabId => TabShepherd.remove(tabId))
+chrome.tabs.onRemoved.addListener(tabId => tabShepherd.remove(tabId))
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.getTabs) {
         chrome.tabs.query({}, tabs => {
-            TabShepherd.actualize(tabs)
-            sendResponse(TabShepherd.getTabs(sender.tab.windowId))                   
+            tabShepherd.actualize(tabs)
+            sendResponse(tabShepherd.getTabs(sender.tab.windowId))                   
         })
         return true
     }
@@ -50,58 +111,3 @@ function makeScreenShot(tabId, windowId, callback) {
     });
 }
 
-class TabShepherd {
-    static __init(){
-        TabShepherd.__tabs = [];
-    }
-
-    static addFromTab(tab) {
-        TabShepherd.__tabs.push({
-            id: tab.id,
-            windowId: tab.windowId,
-            url: tab.url,
-            title: tab.title,
-            favIconUrl: tab.favIconUrl,
-            timestamp: Date.now()
-        });    
-    }
-
-    static update(tabId, {windowId, url, title, favIconUrl, screenShotDataUrl}) {
-        var tab = TabShepherd.__tabs.find(x => x.id === tabId)
-        tab.windowId = windowId === undefined ? tab.windowId : windowId
-        tab.title = title === undefined ? tab.title : title
-        tab.url = url === undefined ? tab.url : url
-        tab.favIconUrl = favIconUrl === undefined ? tab.favIconUrl : favIconUrl
-        tab.screenShotDataUrl = screenShotDataUrl === undefined ? tab.screenShotDataUrl : screenShotDataUrl
-        tab.timestamp = Date.now()
-    }
-
-    static remove(tabId) {
-        TabShepherd.__tabs = TabShepherd.__tabs.filter(x => x.id !== tabId);
-    }
-
-    static actualize(actualTabs) {
-        for (const actualTab of actualTabs) {
-            const tab = TabShepherd.__tabs.find(x => x.id === actualTab.id)
-
-            if (!tab) {
-                TabShepherd.addFromTab(actualTab)
-                continue
-            }
-                
-            if (tab.url !== actualTab.url) {
-                TabShepherd.update(tab.id, {...actualTab, screenShotDataUrl: null})
-                continue
-            }                
-        }
-
-        TabShepherd.__tabs = TabShepherd.__tabs.filter(tab => !!actualTabs.find(actualTab => tab.id === actualTab.id))
-    }
-
-    static getTabs(windowId) {
-        return TabShepherd.__tabs
-            .filter(tab => tab.windowId === windowId)
-            .sort((tab1, tab2) => tab2.timestamp - tab1.timestamp)
-    }
-}
-TabShepherd.__init()
