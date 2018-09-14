@@ -16,12 +16,14 @@ class TabShepherd {
 
     update(tabId, {windowId, url, title, favIconUrl, screenShotDataUrl}) {
         var tab = this.__tabs.find(x => x.id === tabId)
-        tab.windowId = windowId === undefined ? tab.windowId : windowId
-        tab.title = title === undefined ? tab.title : title
-        tab.url = url === undefined ? tab.url : url
-        tab.favIconUrl = favIconUrl === undefined ? tab.favIconUrl : favIconUrl
-        tab.screenShotDataUrl = screenShotDataUrl === undefined ? tab.screenShotDataUrl : screenShotDataUrl
-        tab.timestamp = Date.now()
+        if (tab) {
+            tab.windowId = windowId === undefined ? tab.windowId : windowId
+            tab.title = title === undefined ? tab.title : title
+            tab.url = url === undefined ? tab.url : url
+            tab.favIconUrl = favIconUrl === undefined ? tab.favIconUrl : favIconUrl
+            tab.screenShotDataUrl = screenShotDataUrl === undefined ? tab.screenShotDataUrl : screenShotDataUrl
+            tab.timestamp = Date.now()
+        }
     }
 
     remove(tabId) {
@@ -88,13 +90,6 @@ chrome.tabs.onAttached.addListener((tabId, {newWindowId}) => {
 chrome.tabs.onRemoved.addListener(tabId => tabShepherd.remove(tabId))
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.getTabs) {
-        chrome.tabs.query({}, tabs => {
-            tabShepherd.actualize(tabs)
-            sendResponse(tabShepherd.getTabs(sender.tab.windowId))                   
-        })
-        return true
-    }
     if (message.selectedTabId) {
         chrome.tabs.update(message.selectedTabId, {active: true, highlighted: true});
     }
@@ -110,4 +105,3 @@ function makeScreenShot(tabId, windowId, callback) {
         callback(undefined);
     });
 }
-

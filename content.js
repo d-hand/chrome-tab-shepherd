@@ -1,32 +1,6 @@
-class TabShepherdKeyHandler {
-    constructor() {
-        this.onShow = () => {}
-        this.onHide = () => {}
-        this.__wasShowed = false        
-
-        window.addEventListener('keydown', e => this.__documentOnKeyDown(e), true)
-        window.addEventListener('keyup', e => this.__documentOnKeyUp(e), true)
-    }
-
-    __documentOnKeyDown(e) {
-        if (e.code === "Backquote" && e.ctrlKey === true && !this.__wasShowed) {
-            this.__wasShowed = true
-            this.onShow()
-            e.stopPropagation()
-        }
-    }
-
-    __documentOnKeyUp(e) {
-        if (this.__wasShowed &&  e.key === "Control") {
-            this.__wasShowed = false
-            this.onHide()
-        }
-    }
-}
-
 /*
     TODO 
-        - тормозит когда много вкладок =(
+        - div -> button
         - переписать это говно на риакт (c Webpack-окм кончено)
         - подобрать огненный шрифт        
         - подумать над установкой (обновить все вкладки или фоном выполнить скрипт или...)
@@ -43,22 +17,20 @@ iframe.style.cssText = `
     z-index: 2147483647;
     background: rgba(128, 128, 128, 0.8);
     border-radius: 15px;
-    /*webkit-border-radius: 15px;*/
 `
+iframe.onload = () => iframe.focus()
 
-iframe.onload = function() {    
-};
+window.addEventListener('keydown', e => {
+    if (e.code === "Backquote" && e.ctrlKey === true) {
+        if (!document.body.contains(iframe)) {
+            document.body.appendChild(iframe)            
+        }
+        e.stopPropagation()
+    }    
+}, true)
 
-var pastureKeyHandler = new TabShepherdKeyHandler()
-pastureKeyHandler.onShow = () => activateTabShepherd()
-pastureKeyHandler.onHide  = () => switchBrowserTab()
-
-function activateTabShepherd() {
-    document.body.appendChild(iframe)
-}
-
-function switchBrowserTab() {
-    document.body.removeChild(iframe)
-    // if (tabs && tabs[selectedIndex])
-    //     setTimeout(() => chrome.runtime.sendMessage(chrome.runtime.id, { selectedTabId: tabs[selectedIndex].id }), 100)
-}
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.hideTabShepherd) {
+        document.body.removeChild(iframe)
+    }
+})

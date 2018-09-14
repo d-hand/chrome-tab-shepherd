@@ -7,24 +7,25 @@ class PastureKeyHandler {
             ArrowRight: () => this.onArrowRight()
         }
 
-        window.addEventListener('keydown', e => this.__documentOnKeyDown(e), true)
+        window.addEventListener('keydown', e => this.__onKeyDown(e), true)
+        window.addEventListener('keyup', e => this.__onKeyUp(e), true)
     }
 
-    __documentOnKeyDown(e) {
-        if (this.arrowHandlerMap[e.code]) {
+    __onKeyDown(e) {
+        if (this.arrowHandlerMap[e.code]) 
             this.arrowHandlerMap[e.code]()
-            e.stopPropagation()
-        }
-
-        if (e.code === "Backquote") {
-            if (e.shiftKey)
-                this.onArrowLeft()
-            else
-                this.onArrowRight()
-
-            e.stopPropagation()
-        }
+        
+        if (e.code === "Backquote" && e.shiftKey) 
+            this.onArrowLeft()               
+        
+        if (e.code === "Backquote" && !e.shiftKey)
+            this.onArrowRight()
     }
+
+    __onKeyUp(e) {
+        if (e.key === "Control") 
+            this.onHide()
+    }    
 }
 
 let tabs = undefined
@@ -50,6 +51,19 @@ pastureKeyHandler.onArrowRight = () => selectNextTab()
 pastureKeyHandler.onArrowLeft = () => selectPreviousTab() 
 pastureKeyHandler.onArrowUp = () => selectTabOnPreviousRow()
 pastureKeyHandler.onArrowDown = () => selectTabOnNextRow()
+pastureKeyHandler.onHide = () => switchBrowserTab()
+
+function switchBrowserTab() {
+    if (tabs && tabs[selectedIndex]) {
+        setTimeout(() => {
+            chrome.tabs.query({active: true, currentWindow: true}, (activeTabs) => {                
+                chrome.runtime.sendMessage(chrome.runtime.id, { selectedTabId: tabs[selectedIndex].id }, () => {
+                    activeTabs.forEach(x => chrome.tabs.sendMessage(x.id, {hideTabShepherd: true}))
+                })
+            })            
+        }, 100)
+    }        
+}
 
 function selectNextTab() {
     selectNewTabItem(selectedIndex + 1)
@@ -112,7 +126,10 @@ function createTabItem(tab, index) {
     tabItem.classList.add('tab-list-item')
     tabItem.appendChild(createTitleContainer(tab))
     tab.screenShotDataUrl && tabItem.appendChild(createScreenShot(tab))
-    tabItem.onclick = () => selectNewTabItem(index)
+    tabItem.onclick = () => {
+        selectNewTabItem(index)
+        switchBrowserTab()
+    }
     return tabItem
 }
 
