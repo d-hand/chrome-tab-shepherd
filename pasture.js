@@ -35,18 +35,15 @@ let tabList = document.createElement('div')
 tabList.classList.add('tab-list')
 document.body.appendChild(tabList)
 
-chrome.windows.getCurrent(window => {
-    chrome.runtime.getBackgroundPage(function ({tabShepherd}) {
-        chrome.tabs.query({}, actualTabs => {
-            tabShepherd.actualize(actualTabs)
-            tabs = tabShepherd.getTabs(window.id)
-            tabs.forEach((tab, index) => tabList.appendChild(createTabItem(tab, index)))
-            selectNewTabItem(tabList.children.length > 1 ? 1 : 0)
-        })
+chrome.runtime.getBackgroundPage(function ({tabShepherd}) {
+    tabShepherd.getTabs(shepherdTabs => {
+        tabs = shepherdTabs
+        tabs.forEach((tab, index) => tabList.appendChild(createTabItem(tab, index)))
+        selectNewTabItem(tabList.children.length > 1 ? 1 : 0)
     })    
-})
+})    
 
-var pastureKeyHandler = new PastureKeyHandler()
+let pastureKeyHandler = new PastureKeyHandler()
 pastureKeyHandler.onArrowRight = () => selectNextTab() 
 pastureKeyHandler.onArrowLeft = () => selectPreviousTab() 
 pastureKeyHandler.onArrowUp = () => selectTabOnPreviousRow()
@@ -56,7 +53,7 @@ pastureKeyHandler.onHide = () => switchBrowserTab()
 function switchBrowserTab() {
     if (tabs && tabs[selectedIndex]) {
         setTimeout(() => {
-            chrome.tabs.query({active: true, currentWindow: true}, (activeTabs) => {                
+            chrome.tabs.query({currentWindow: true}, (activeTabs) => {                
                 chrome.runtime.sendMessage(chrome.runtime.id, { selectedTabId: tabs[selectedIndex].id }, () => {
                     activeTabs.forEach(x => chrome.tabs.sendMessage(x.id, {hideTabShepherd: true}))
                 })
