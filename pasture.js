@@ -24,7 +24,7 @@ class PastureKeyHandler {
 
     __onKeyUp(e) {
         if (e.key === "Control") 
-            this.onHide()
+            this.onControlUp()
     }    
 }
 
@@ -48,7 +48,7 @@ pastureKeyHandler.onArrowRight = () => selectNextTab()
 pastureKeyHandler.onArrowLeft = () => selectPreviousTab() 
 pastureKeyHandler.onArrowUp = () => selectTabOnPreviousRow()
 pastureKeyHandler.onArrowDown = () => selectTabOnNextRow()
-pastureKeyHandler.onHide = () => switchBrowserTab()
+pastureKeyHandler.onControlUp = () => switchBrowserTab()
 
 function switchBrowserTab() {
     if (tabs && tabs[selectedIndex]) {

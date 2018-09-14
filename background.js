@@ -14,7 +14,7 @@ class TabShepherd {
 
     getTabs(callback) {
         chrome.windows.getCurrent(window => {
-            chrome.tabs.query({currentWindow: true}, actualTabs => {
+            chrome.tabs.query({}, actualTabs => {
                 this.__actualize(actualTabs)
                 var tabs = this.__tabs
                     .filter(tab => tab.windowId === window.id)
@@ -67,7 +67,7 @@ class TabShepherd {
 
     __makeScreenShot(tabId, windowId, callback) {
         chrome.tabs.get(tabId, tab => {
-            if (tab.active && tab.url && !tab.url.includes("chrome://")) {
+            if (tab.active && tab.url && tab.url !== "" && !tab.url.includes("chrome://")) {
                 chrome.tabs.captureVisibleTab(windowId, { format: 'jpeg', quality: 100 }, callback)
                 return;
             }
