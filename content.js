@@ -33,7 +33,8 @@ window.addEventListener('keydown', e => {
 }, true)
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.hideTabShepherd) {
+    if (message.switchTab) {
         document.body.removeChild(iframe)
+        chrome.runtime.sendMessage(chrome.runtime.id, message)
     }
 })

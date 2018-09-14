@@ -60,8 +60,8 @@ class TabShepherd {
     }
 
     __onMessage(message, sender, sendResponse) {
-        if (message.selectedTabId) {
-            chrome.tabs.update(message.selectedTabId, {active: true, highlighted: true});
+        if (message.switchTab) {
+            chrome.tabs.update(message.switchTab.id, {active: true, highlighted: true});
         }
     }
 

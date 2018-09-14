@@ -51,14 +51,10 @@ pastureKeyHandler.onArrowDown = () => selectTabOnNextRow()
 pastureKeyHandler.onControlUp = () => switchBrowserTab()
 
 function switchBrowserTab() {
-    if (tabs && tabs[selectedIndex]) {
-        setTimeout(() => {
-            chrome.tabs.query({currentWindow: true}, (activeTabs) => {                
-                chrome.runtime.sendMessage(chrome.runtime.id, { selectedTabId: tabs[selectedIndex].id }, () => {
-                    activeTabs.forEach(x => chrome.tabs.sendMessage(x.id, {hideTabShepherd: true}))
-                })
-            })            
-        }, 100)
+    if (tabs && tabs[selectedIndex]) {        
+        chrome.tabs.query({active: true, currentWindow: true}, (activeTabs) => {                
+            chrome.tabs.sendMessage(activeTabs[0].id, { switchTab: { id: tabs[selectedIndex].id } })
+        })        
     }        
 }
 
@@ -125,7 +121,7 @@ function createTabItem(tab, index) {
     tab.screenShotDataUrl && tabItem.appendChild(createScreenShot(tab))
     tabItem.onclick = () => {
         selectNewTabItem(index)
-        switchBrowserTab()
+        setTimeout(() => switchBrowserTab(), 100)
     }
     return tabItem
 }
