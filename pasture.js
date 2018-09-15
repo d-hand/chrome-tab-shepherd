@@ -125,11 +125,8 @@ function createTitleContainer(tab) {
 
     let favicon = document.createElement('img')
     favicon.classList.add('tab-list-item-title-favicon')
-
-    if (tab.favIconUrl) {
-        favicon.src = tab.favIconUrl
-        title.appendChild(favicon)    
-    }
+    favicon.src = tab.favIconUrl ? tab.favIconUrl : "images/default-favicon.ico"
+    title.appendChild(favicon)    
 
     let titleText = document.createElement('span')
     titleText.innerText = tab.title
