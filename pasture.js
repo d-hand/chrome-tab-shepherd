@@ -67,13 +67,17 @@ function selectPreviousTab() {
 }
 
 function selectTabOnPreviousRow() {
-    let newIndex = findClosestTab(true)
-    newIndex !== undefined && selectNewTabItem(newIndex)
+    let newIndex = findhClosestTab(0, 
+                                   selectedIndex - 1, 
+                                   (rect, selectedRect) => rect.bottom > selectedRect.top)
+    selectNewTabItem(newIndex)
 }
 
 function selectTabOnNextRow() {
-    let newIndex = findClosestTab(false)
-    newIndex !== undefined && selectNewTabItem(newIndex)
+    let newIndex = findhClosestTab(selectedIndex + 1, 
+                                   tabs.length - 1, 
+                                   (rect, selectedRect) => rect.top < selectedRect.bottom)
+    selectNewTabItem(newIndex)
 }
 
 function selectNewTabItem(index) {
@@ -85,22 +89,19 @@ function selectNewTabItem(index) {
     selectedIndex = index    
 }
 
-function findClosestTab(below) {
+function findhClosestTab(start, end, excludeCallback) {
     let index, 
-        start = below ? 0 : selectedIndex + 1,
-        end = below ? selectedIndex - 1 : tabs.length - 1, 
-        distance = Number.MAX_VALUE,
-        selectedRect = tabList.children[selectedIndex].getBoundingClientRect(),
-        heightRow = selectedRect.bottom - selectedRect.top
+        minDistance = Number.MAX_VALUE,
+        selectedRect = tabList.children[selectedIndex].getBoundingClientRect()
 
     for (let i = start; i <= end; i++) {
         let rect = tabList.children[i].getBoundingClientRect()
-        if (Math.abs(selectedRect.top - rect.top) < heightRow)
+        if (excludeCallback(rect, selectedRect))
             continue
         let newDistance = Math.sqrt(Math.pow(selectedRect.left - rect.left, 2) +  Math.pow(selectedRect.top - rect.top, 2))
-        if (newDistance < distance) {
+        if (newDistance < minDistance) {
             index = i
-            distance = newDistance 
+            minDistance = newDistance 
         }
     }
     return index
