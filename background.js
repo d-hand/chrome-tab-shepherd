@@ -2,7 +2,7 @@ class TabShepherd {
     constructor() {
         this.__tabs = [];
 
-        chrome.browserAction.onClicked.addListener(this.__onBrowserActionClicked.bind(this))
+        chrome.runtime.onInstalled.addListener(this.__onInstalled.bind(this));
         chrome.windows.onCreated.addListener(this.__onWindowCreated.bind(this))
         chrome.tabs.onCreated.addListener(this.__onTabCreated.bind(this))        
         chrome.tabs.onActivated.addListener(this.__onTabActivated.bind(this))
@@ -25,8 +25,10 @@ class TabShepherd {
         })
     }    
 
-    __onBrowserActionClicked() {
-        chrome.tabs.create({url: chrome.extension.getURL('pasture.html')});    
+    __onInstalled(){
+        chrome.tabs.query({}, 
+            tabs => tabs.filter(tab => tab.url !== "" && !tab.url.includes("chrome://"))
+                        .forEach(tab => chrome.tabs.executeScript(tab.id, {file: "content.js"})))
     }
 
     __onWindowCreated() {
@@ -71,7 +73,7 @@ class TabShepherd {
 
     __makeScreenShot(tabId, windowId, callback) {
         chrome.tabs.get(tabId, tab => {
-            if (tab.active && tab.url && tab.url !== "" && !tab.url.includes("chrome://")) {
+            if (tab.active && tab.url && !tab.url.includes("chrome://")) {
                 chrome.tabs.captureVisibleTab(windowId, { format: 'jpeg', quality: 100 }, callback)
                 return;
             }
