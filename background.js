@@ -2,7 +2,8 @@ class TabShepherd {
     constructor() {
         this.__tabs = [];
 
-        chrome.browserAction.onClicked.addListener(this.__onBrowserActionClicked.bind(this))        
+        chrome.browserAction.onClicked.addListener(this.__onBrowserActionClicked.bind(this))
+        chrome.windows.onCreated.addListener(this.__onWindowCreated.bind(this))
         chrome.tabs.onCreated.addListener(this.__onTabCreated.bind(this))        
         chrome.tabs.onActivated.addListener(this.__onTabActivated.bind(this))
         chrome.tabs.onUpdated.addListener(this.__onTabUpdated.bind(this))
@@ -14,8 +15,7 @@ class TabShepherd {
 
     getTabs(callback) {
         chrome.windows.getCurrent(window => {
-            chrome.tabs.query({}, actualTabs => {
-                this.__actualize(actualTabs)
+            this.__actualize(() => {
                 var tabs = this.__tabs
                     .filter(tab => tab.windowId === window.id)
                     .sort((tab1, tab2) => tab2.timestamp - tab1.timestamp)
@@ -27,6 +27,10 @@ class TabShepherd {
 
     __onBrowserActionClicked() {
         chrome.tabs.create({url: chrome.extension.getURL('pasture.html')});    
+    }
+
+    __onWindowCreated() {
+        this.__actualize()
     }
 
     __onTabCreated(tab) {
@@ -103,22 +107,25 @@ class TabShepherd {
         this.__tabs = this.__tabs.filter(x => x.id !== tabId);
     }
 
-    __actualize(actualTabs) {
-        for (const actualTab of actualTabs) {
-            const tab = this.__tabs.find(x => x.id === actualTab.id)
-
-            if (!tab) {
-                this.__addFromTab(actualTab)
-                continue
+    __actualize(callback) {
+        chrome.tabs.query({}, actualTabs => {
+            for (const actualTab of actualTabs) {
+                const tab = this.__tabs.find(x => x.id === actualTab.id)
+    
+                if (!tab) {
+                    this.__addFromTab(actualTab)
+                    continue
+                }
+                    
+                if (tab.url !== actualTab.url) {
+                    this.__update(tab.id, {...actualTab, screenShotDataUrl: null})
+                    continue
+                }                
             }
-                
-            if (tab.url !== actualTab.url) {
-                this.__update(tab.id, {...actualTab, screenShotDataUrl: null})
-                continue
-            }                
-        }
-
-        this.__tabs = this.__tabs.filter(tab => !!actualTabs.find(actualTab => tab.id === actualTab.id))
+    
+            this.__tabs = this.__tabs.filter(tab => !!actualTabs.find(actualTab => tab.id === actualTab.id))
+            callback && callback()
+        })
     }
 }
 
