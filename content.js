@@ -1,12 +1,12 @@
 /*
     TODO
-        - div -> button
         - в 3 версии добавить сроку поиска 
         - искать элементы выше|ниже под опредленным углом %)
         - переписать это говно на риакт (c Webpack-окм кончено)
         - подобрать огненный шрифт        
         - подумать над установкой (обновить все вкладки или фоном выполнить скрипт или...)
-        - разобраться с ошибками
+        - разобраться с ошибками:
+            1) Mixed Content: The page at 'https://htmlacademy.ru/' was loaded over HTTPS, but requested an insecure image 'http://htmlbook.ru/favicon.ico'. This content should also be served over HTTPS.
 */
 
 let iframe = document.createElement('iframe')

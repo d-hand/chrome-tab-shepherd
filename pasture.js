@@ -81,15 +81,7 @@ function selectNewTabItem(index) {
     if (!newSelectedTabItem)
         return
 
-    let selectedTabItem = tabList.children[selectedIndex]
-    if (selectedTabItem) 
-        selectedTabItem.classList.remove('tab-list-item-selected')
-
-    newSelectedTabItem.classList.add('tab-list-item-selected')
-    newSelectedTabItem.scrollIntoView({
-        behavior: "smooth",     //"auto"  | "instant" | "smooth",
-        block:    "end"         //"start" | "end",
-    })
+    newSelectedTabItem.focus()
     selectedIndex = index    
 }
 
@@ -115,7 +107,7 @@ function findClosestTab(below) {
 }
 
 function createTabItem(tab, index) {
-    let tabItem = document.createElement('div')
+    let tabItem = document.createElement('button')
     tabItem.classList.add('tab-list-item')
     tabItem.appendChild(createTitleContainer(tab))
     tab.screenShotDataUrl && tabItem.appendChild(createScreenShot(tab))

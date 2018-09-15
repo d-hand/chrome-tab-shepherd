@@ -23,17 +23,19 @@
             align-content: space-around;        /* Выравнивает СТРОКИ flex-контейнера во flex-контейнере, когда есть дополнительное пространство по поперечной оси, подобно тому,  как justify-content выравнивает отдельные элементы по главной оси. */   
         }
 
-        .tab-list-item {                
+        .tab-list-item {
             width: 20%;
             border: 2px solid black;
             background: #cecece;
             border-radius: 15px;
             margin: 10px;
+            padding: 0px; /* button по умолчанию имеет левый и правй отступ*/ 
+            outline: 0px; /* выключил дефолтный фоксу, ибо у меня свой*/
         }
 
-        .tab-list-item-selected {
-            background: white !important;
-            border-color: white !important;
+        .tab-list-item:focus {
+            background: white;
+            border-color: white;
             box-shadow: 0px 0px 50px 30px rgba(255,255,255,0.8);
         }
 
@@ -52,6 +54,7 @@
         }
 
         .tab-list-item-screen-shot {
+            display: block;           /* кажется, что хитрый img псле того как перехал в ifram перестал быть блоком (не доконца заполнял котэйнер в к отором находился)... возможно потому что от body прилетел шрифт хз...*/          
             border-bottom-left-radius: inherit;
             border-bottom-right-radius: inherit;
             width: 100%;
