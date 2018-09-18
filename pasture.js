@@ -51,11 +51,10 @@
     pastureKeyHandler.onArrowDown = () => selectTabOnNextRow()
     pastureKeyHandler.onControlUp = () => switchBrowserTab()
     
-    function switchBrowserTab() {
+    async function switchBrowserTab() {
         if (tabs && tabs[selectedIndex]) {        
-            chrome.tabs.query({active: true, currentWindow: true}, (activeTabs) => {                
-                chrome.tabs.sendMessage(activeTabs[0].id, { switchTab: { id: tabs[selectedIndex].id } })
-            })        
+            let activeTabs = await browser.tabs.query({active: true, currentWindow: true})
+            browser.tabs.sendMessage(activeTabs[0].id, { switchTab: { id: tabs[selectedIndex].id } })
         }        
     }
     
@@ -126,7 +125,7 @@
     
         let favicon = document.createElement('img')
         favicon.classList.add('tab-list-item-title-favicon')
-        favicon.src = tab.favIconUrl ? tab.favIconUrl : "images/default-favicon.ico"
+        favicon.src = tab.favIconDataUrl ? tab.favIconDataUrl : "images/default-favicon.ico"
         title.appendChild(favicon)    
     
         let titleText = document.createElement('span')

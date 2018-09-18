@@ -32,27 +32,27 @@ class TabShepherd {
     }
 
     __onTabCreated(tab) {
-        this.__addFromTab(tab)
+        return this.__addFromTab(tab)
     }
 
     async __onTabActivated({tabId, windowId}){
         let screenShotDataUrl = await this.__makeScreenShot(tabId, windowId) 
-        this.__update(tabId, {screenShotDataUrl})
+        return this.__update(tabId, {screenShotDataUrl})
     }
 
     async __onTabUpdated(tabId, changeInfo, {windowId, url, title, favIconUrl}) {
         if (changeInfo.status === 'complete') {
             let screenShotDataUrl = await this.__makeScreenShot(tabId, windowId)
-            this.__update(tabId, {url, title, favIconUrl, screenShotDataUrl})
+            return this.__update(tabId, {url, title, favIconUrl, screenShotDataUrl})
         }
     }
 
     __onTabDetached(tabId) {
-        this.__update(tabId, {windowId: null})
+        return this.__update(tabId, {windowId: null})
     }
 
     __onTabAttached(tabId, {newWindowId}) {
-        this.__update(tabId, {windowId: newWindowId})
+        return this.__update(tabId, {windowId: newWindowId})
     }
 
     __onTabRemoved(tabId) {
@@ -66,31 +66,35 @@ class TabShepherd {
     }
 
     async __makeScreenShot(tabId, windowId) {
-        let tab = await browser.tabs.get(tabId)
-        if (tab.active && tab.url && !tab.url.includes("chrome://")) {
-            return browser.tabs.captureVisibleTab(windowId, { format: 'jpeg', quality: 100 })
+        try {
+            let tab = await browser.tabs.get(tabId)
+            if (tab.active && tab.url && !tab.url.includes("chrome://")) {
+                return browser.tabs.captureVisibleTab(windowId, { format: 'jpeg', quality: 100 })
+            }            
+        } catch {            
         }
-        return 
+
+        return Promise.resolve(undefined)
     }
 
-    __addFromTab(tab) {
+    async __addFromTab(tab) {
         this.__tabs.push({
             id: tab.id,
             windowId: tab.windowId,
             url: tab.url,
             title: tab.title,
-            favIconUrl: tab.favIconUrl,
+            favIconDataUrl: await this.__getFavIconDataURL(tab.favIconUrl),
             timestamp: Date.now()
         });    
     }
 
-    __update(tabId, {windowId, url, title, favIconUrl, screenShotDataUrl}) {
+    async __update(tabId, {windowId, url, title, favIconUrl, screenShotDataUrl}) {
         var tab = this.__tabs.find(x => x.id === tabId)
         if (tab) {
             tab.windowId = windowId === undefined ? tab.windowId : windowId
             tab.title = title === undefined ? tab.title : title
             tab.url = url === undefined ? tab.url : url
-            tab.favIconUrl = favIconUrl === undefined ? tab.favIconUrl : favIconUrl
+            tab.favIconDataUrl = favIconUrl === undefined ? tab.favIconDataUrl : await this.__getFavIconDataURL(favIconUrl)
             tab.screenShotDataUrl = screenShotDataUrl === undefined ? tab.screenShotDataUrl : screenShotDataUrl
             tab.timestamp = Date.now()
         }
@@ -100,18 +104,39 @@ class TabShepherd {
         this.__tabs = this.__tabs.filter(x => x.id !== tabId);
     }
 
+    __getFavIconDataURL(favIconUrl) {
+        return new Promise((resolve) => {
+            if (!favIconUrl || favIconUrl.includes("chrome://"))
+                resolve(undefined)
+
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', favIconUrl);
+            xhr.responseType = 'blob';            
+            xhr.onload = () => {
+                let reader = new FileReader();
+                reader.onloadend = () => {
+                    resolve(reader.result);
+                }
+                reader.onerror = () => resolve(undefined)
+                reader.readAsDataURL(xhr.response);
+            };
+            xhr.onerror = () => resolve(undefined)
+            xhr.send();       
+        })
+    }
+
     async __actualize() {
         let actualTabs = await browser.tabs.query({})
         for (const actualTab of actualTabs) {
             const tab = this.__tabs.find(x => x.id === actualTab.id)
 
             if (!tab) {
-                this.__addFromTab(actualTab)
+                await this.__addFromTab(actualTab)
                 continue
             }
                 
             if (tab.url !== actualTab.url) {
-                this.__update(tab.id, {...actualTab, screenShotDataUrl: null})
+                await this.__update(tab.id, {...actualTab, screenShotDataUrl: null})
                 continue
             }                
         }
