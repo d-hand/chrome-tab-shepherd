@@ -2,7 +2,7 @@
     TODO
         - добавить иконки приложения в разных размеров 16x16 и т.д.
         - переписать это говно на риакт (c Webpack-окм кончено)
-        - в 3 версии добавить сроку поиска
+        - в 3 версии добавить строку поиска
         - разобраться с ошибками:
             1) Mixed Content: The page at 'https://htmlacademy.ru/' was loaded over HTTPS, but requested an insecure image 'http://htmlbook.ru/favicon.ico'. This content should also be served over HTTPS.
 */

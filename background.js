@@ -2,54 +2,48 @@ class TabShepherd {
     constructor() {
         this.__tabs = [];
 
-        chrome.runtime.onInstalled.addListener(this.__onInstalled.bind(this));
-        chrome.windows.onCreated.addListener(this.__onWindowCreated.bind(this))
-        chrome.tabs.onCreated.addListener(this.__onTabCreated.bind(this))        
-        chrome.tabs.onActivated.addListener(this.__onTabActivated.bind(this))
-        chrome.tabs.onUpdated.addListener(this.__onTabUpdated.bind(this))
-        chrome.tabs.onDetached.addListener(this.__onTabDetached.bind(this))        
-        chrome.tabs.onAttached.addListener(this.__onTabAttached.bind(this))        
-        chrome.tabs.onRemoved.addListener(this.__onTabRemoved.bind(this))        
-        chrome.runtime.onMessage.addListener(this.__onMessage.bind(this))
+        browser.runtime.onInstalled.addListener(this.__onInstalled.bind(this));
+        browser.windows.onCreated.addListener(this.__onWindowCreated.bind(this))
+        browser.tabs.onCreated.addListener(this.__onTabCreated.bind(this))        
+        browser.tabs.onActivated.addListener(this.__onTabActivated.bind(this))
+        browser.tabs.onUpdated.addListener(this.__onTabUpdated.bind(this))
+        browser.tabs.onDetached.addListener(this.__onTabDetached.bind(this))        
+        browser.tabs.onAttached.addListener(this.__onTabAttached.bind(this))        
+        browser.tabs.onRemoved.addListener(this.__onTabRemoved.bind(this))        
+        browser.runtime.onMessage.addListener(this.__onMessage.bind(this))
     }
 
-    getTabs(callback) {
-        chrome.windows.getCurrent(window => {
-            this.__actualize(() => {
-                var tabs = this.__tabs
-                    .filter(tab => tab.windowId === window.id)
-                    .sort((tab1, tab2) => tab2.timestamp - tab1.timestamp)
-
-                callback(tabs)
-            })
-        })
+    async getTabs() {
+        let window = await browser.windows.getCurrent()
+        await this.__actualize()
+        return this.__tabs
+            .filter(tab => tab.windowId === window.id)
+            .sort((tab1, tab2) => tab2.timestamp - tab1.timestamp)
     }    
 
-    __onInstalled(){
-        chrome.tabs.query({}, 
-            tabs => tabs.filter(tab => tab.url !== "" && !tab.url.includes("chrome://"))
-                        .forEach(tab => chrome.tabs.executeScript(tab.id, {file: "content.js"})))
+    async __onInstalled() {
+        let tabs = await browser.tabs.query({}) 
+        tabs.filter(tab => tab.url !== "" && !tab.url.includes("chrome://"))
+            .forEach(tab => browser.tabs.executeScript(tab.id, {file: "content.js"}))
     }
 
-    __onWindowCreated() {
-        this.__actualize()
+    async __onWindowCreated() {
+        return this.__actualize()
     }
 
     __onTabCreated(tab) {
         this.__addFromTab(tab)
     }
 
-    __onTabActivated({tabId, windowId}){
-        this.__makeScreenShot(tabId, windowId, screenShotDataUrl => {
-            this.__update(tabId, {screenShotDataUrl})
-        })
+    async __onTabActivated({tabId, windowId}){
+        let screenShotDataUrl = await this.__makeScreenShot(tabId, windowId) 
+        this.__update(tabId, {screenShotDataUrl})
     }
 
-    __onTabUpdated(tabId, changeInfo, {windowId, url, title, favIconUrl}) {
+    async __onTabUpdated(tabId, changeInfo, {windowId, url, title, favIconUrl}) {
         if (changeInfo.status === 'complete') {
-            this.__makeScreenShot(tabId, windowId, screenShotDataUrl => {
-                this.__update(tabId, {url, title, favIconUrl, screenShotDataUrl})
-            })
+            let screenShotDataUrl = await this.__makeScreenShot(tabId, windowId)
+            this.__update(tabId, {url, title, favIconUrl, screenShotDataUrl})
         }
     }
 
@@ -67,19 +61,16 @@ class TabShepherd {
 
     __onMessage(message, sender, sendResponse) {
         if (message.switchTab) {
-            chrome.tabs.update(message.switchTab.id, {active: true, highlighted: true});
+            browser.tabs.update(message.switchTab.id, {active: true, highlighted: true});
         }
     }
 
-    __makeScreenShot(tabId, windowId, callback) {
-        chrome.tabs.get(tabId, tab => {
-            if (tab.active && tab.url && !tab.url.includes("chrome://")) {
-                chrome.tabs.captureVisibleTab(windowId, { format: 'jpeg', quality: 100 }, callback)
-                return;
-            }
-    
-            callback(undefined);
-        });
+    async __makeScreenShot(tabId, windowId) {
+        let tab = await browser.tabs.get(tabId)
+        if (tab.active && tab.url && !tab.url.includes("chrome://")) {
+            return browser.tabs.captureVisibleTab(windowId, { format: 'jpeg', quality: 100 })
+        }
+        return 
     }
 
     __addFromTab(tab) {
@@ -103,31 +94,29 @@ class TabShepherd {
             tab.screenShotDataUrl = screenShotDataUrl === undefined ? tab.screenShotDataUrl : screenShotDataUrl
             tab.timestamp = Date.now()
         }
-    }
+    }   
 
     __remove(tabId) {
         this.__tabs = this.__tabs.filter(x => x.id !== tabId);
     }
 
-    __actualize(callback) {
-        chrome.tabs.query({}, actualTabs => {
-            for (const actualTab of actualTabs) {
-                const tab = this.__tabs.find(x => x.id === actualTab.id)
-    
-                if (!tab) {
-                    this.__addFromTab(actualTab)
-                    continue
-                }
-                    
-                if (tab.url !== actualTab.url) {
-                    this.__update(tab.id, {...actualTab, screenShotDataUrl: null})
-                    continue
-                }                
+    async __actualize() {
+        let actualTabs = await browser.tabs.query({})
+        for (const actualTab of actualTabs) {
+            const tab = this.__tabs.find(x => x.id === actualTab.id)
+
+            if (!tab) {
+                this.__addFromTab(actualTab)
+                continue
             }
+                
+            if (tab.url !== actualTab.url) {
+                this.__update(tab.id, {...actualTab, screenShotDataUrl: null})
+                continue
+            }                
+        }
     
-            this.__tabs = this.__tabs.filter(tab => !!actualTabs.find(actualTab => tab.id === actualTab.id))
-            callback && callback()
-        })
+        this.__tabs = this.__tabs.filter(tab => !!actualTabs.find(actualTab => tab.id === actualTab.id))
     }
 }
 
