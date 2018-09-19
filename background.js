@@ -32,7 +32,7 @@ class TabShepherd {
     }
 
     __onTabCreated(tab) {
-        return this.__addFromTab(tab)
+        return this.__update(tab.id, {...tab})
     }
 
     async __onTabActivated({tabId, windowId}){
@@ -66,37 +66,40 @@ class TabShepherd {
     }
 
     async __makeScreenShot(tabId, windowId) {
-        try {
+        try 
+        {
             let tab = await browser.tabs.get(tabId)
             if (tab.active && tab.url && !tab.url.includes("chrome://")) {
                 return browser.tabs.captureVisibleTab(windowId, { format: 'jpeg', quality: 100 })
             }            
-        } catch {            
+        } 
+        catch(error) 
+        {
+            console.log(error)
         }
 
         return Promise.resolve(undefined)
     }
 
-    async __addFromTab(tab) {
-        this.__tabs.push({
-            id: tab.id,
-            windowId: tab.windowId,
-            url: tab.url,
-            title: tab.title,
-            favIconDataUrl: await this.__getFavIconDataURL(tab.favIconUrl),
-            timestamp: Date.now()
-        });    
-    }
-
     async __update(tabId, {windowId, url, title, favIconUrl, screenShotDataUrl}) {
-        var tab = this.__tabs.find(x => x.id === tabId)
-        if (tab) {
+        try 
+        {
+            let tab = this.__tabs.find(x => x.id === tabId)
+            if (!tab) {
+                tab = {id: tabId}
+                this.__tabs.push(tab)
+            }
+            
             tab.windowId = windowId === undefined ? tab.windowId : windowId
             tab.title = title === undefined ? tab.title : title
             tab.url = url === undefined ? tab.url : url
             tab.favIconDataUrl = favIconUrl === undefined ? tab.favIconDataUrl : await this.__getFavIconDataURL(favIconUrl)
             tab.screenShotDataUrl = screenShotDataUrl === undefined ? tab.screenShotDataUrl : screenShotDataUrl
-            tab.timestamp = Date.now()
+            tab.timestamp = Date.now()      
+        } 
+        catch (error) 
+        {
+            console.log(error)
         }
     }   
 
@@ -127,20 +130,7 @@ class TabShepherd {
 
     async __actualize() {
         let actualTabs = await browser.tabs.query({})
-        for (const actualTab of actualTabs) {
-            const tab = this.__tabs.find(x => x.id === actualTab.id)
-
-            if (!tab) {
-                await this.__addFromTab(actualTab)
-                continue
-            }
-                
-            if (tab.url !== actualTab.url) {
-                await this.__update(tab.id, {...actualTab, screenShotDataUrl: null})
-                continue
-            }                
-        }
-    
+        actualTabs.forEach(actualTab => this.__update(actualTab.id, {...actualTab}))
         this.__tabs = this.__tabs.filter(tab => !!actualTabs.find(actualTab => tab.id === actualTab.id))
     }
 }
