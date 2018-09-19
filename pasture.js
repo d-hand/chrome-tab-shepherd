@@ -125,7 +125,7 @@
     
         let favicon = document.createElement('img')
         favicon.classList.add('tab-list-item-title-favicon')
-        favicon.src = tab.favIconDataUrl ? tab.favIconDataUrl : "images/default-favicon.ico"
+        favicon.src = tab.favIconDataUrl ? tab.favIconDataUrl : "images/tab-shepherd-16.png"
         title.appendChild(favicon)    
     
         let titleText = document.createElement('span')
