@@ -1,3 +1,3 @@
 # Tab Shepherd
 chrome extension...
-Ctrl + `
+Ctrl + ~
