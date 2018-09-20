@@ -81,7 +81,7 @@ class TabShepherd {
         return Promise.resolve(undefined)
     }
 
-    async __update(tabId, {windowId, url, title, favIconUrl, screenShotDataUrl}) {
+    async __update(tabId, {windowId, url, title, favIconUrl, screenShotDataUrl, withoutTimestamp}) {
         try 
         {
             let tab = this.__tabs.find(x => x.id === tabId)
@@ -95,7 +95,7 @@ class TabShepherd {
             tab.url = url === undefined ? tab.url : url
             tab.favIconDataUrl = favIconUrl === undefined ? tab.favIconDataUrl : await this.__getFavIconDataURL(favIconUrl)
             tab.screenShotDataUrl = screenShotDataUrl === undefined ? tab.screenShotDataUrl : screenShotDataUrl
-            tab.timestamp = Date.now()      
+            tab.timestamp = withoutTimestamp ? tab.timestamp : Date.now()
         } 
         catch (error) 
         {
@@ -130,7 +130,7 @@ class TabShepherd {
 
     async __actualize() {
         let actualTabs = await browser.tabs.query({})
-        actualTabs.forEach(actualTab => this.__update(actualTab.id, {...actualTab}))
+        await Promise.all(actualTabs.map(actualTab => this.__update(actualTab.id, {...actualTab, withoutTimestamp: true})))
         this.__tabs = this.__tabs.filter(tab => !!actualTabs.find(actualTab => tab.id === actualTab.id))
     }
 }
