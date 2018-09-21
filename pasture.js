@@ -68,15 +68,15 @@ function selectPreviousTab() {
 
 function selectTabOnPreviousRow() {
     let newIndex = findhClosestTab(0, 
-                                    selectedIndex - 1, 
-                                    (rect, selectedRect) => rect.bottom > selectedRect.top)
+                                   selectedIndex - 1, 
+                                   (rect, selectedRect) => rect.bottom > selectedRect.top)
     selectNewTabItem(newIndex)
 }
 
 function selectTabOnNextRow() {
     let newIndex = findhClosestTab(selectedIndex + 1, 
-                                    tabs.length - 1, 
-                                    (rect, selectedRect) => rect.top < selectedRect.bottom)
+                                   tabs.length - 1, 
+                                   (rect, selectedRect) => rect.top < selectedRect.bottom)
     selectNewTabItem(newIndex)
 }
 

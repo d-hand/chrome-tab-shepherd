@@ -1,15 +1,6 @@
 class TabShepherd {
     constructor() {
         this.__tabs = [];
-        chrome.runtime.onInstalled.addListener(() => {
-            chrome.tabs.query({}, tabs => {
-                tabs.filter(tab => tab.url !== "" && !tab.url.startsWith("chrome"))
-                    .forEach(tab => chrome.tabs.executeScript(tab.id, {file: "content.js"}, () => {
-                        if (chrome.runtime.lastError) 
-                            console.info("Не удалось выполнить content.js", tab)                                                        
-                    }))    
-            }) 
-        })
         chrome.runtime.onMessage.addListener(message => {
             if (message.switchTab) 
                 chrome.tabs.update(message.switchTab.id, {active: true, highlighted: true});                
