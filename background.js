@@ -51,10 +51,10 @@ class TabShepherd {
                 tab.url = chromeTab.url
     
                 if (tab.id === tabId && fetchFavIcon || !tab.favIconDataUrl)
-                    this.__setFavIconDataURL(tab, chromeTab.favIconUrl)
+                    this.__setFavIconDataUrl(tab, chromeTab.favIconUrl)
     
-                if (tab.id === tabId && makeScreenShot)
-                    this.__makeScreenShot(tab, chromeTab)
+                if (tab.id === tabId && chromeTab.active && makeScreenShot)
+                    this.__setScreenShotDataUrl(tab, chromeTab)
     
                 if (tab.id === tabId)
                     tab.timestamp = Date.now()
@@ -62,7 +62,7 @@ class TabShepherd {
         })
     }
 
-    __makeScreenShot(tab, chromeTab) {        
+    __setScreenShotDataUrl(tab, chromeTab) {        
         chrome.tabs.captureVisibleTab(chromeTab.windowId, { format: 'jpeg', quality: 100 }, dataUrl => {
             if(chrome.runtime.lastError) {
                 console.info("Не удалось сделать скриншот", chromeTab)
@@ -72,7 +72,7 @@ class TabShepherd {
         })
     }
 
-    __setFavIconDataURL(tab, favIconUrl) {        
+    __setFavIconDataUrl(tab, favIconUrl) {        
         if (!favIconUrl)             
             return
 
