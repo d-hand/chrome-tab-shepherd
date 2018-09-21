@@ -1,108 +1,102 @@
 class TabShepherd {
     constructor() {
         this.__tabs = [];
-
-        browser.runtime.onInstalled.addListener(async () => {
-            let tabs = await browser.tabs.query({}) 
-            tabs.filter(tab => tab.url !== "" && !tab.url.includes("chrome://"))
-                .forEach(tab => browser.tabs.executeScript(tab.id, {file: "content.js"}))    
+        chrome.runtime.onInstalled.addListener(() => {
+            chrome.tabs.query({}, tabs => {
+                tabs.filter(tab => tab.url !== "" && !tab.url.startsWith("chrome"))
+                    .forEach(tab => chrome.tabs.executeScript(tab.id, {file: "content.js"}, () => {
+                        if (chrome.runtime.lastError) 
+                            console.info("Не удалось выполнить content.js", tab)                                                        
+                    }))    
+            }) 
         })
-        browser.runtime.onMessage.addListener(message => {
+        chrome.runtime.onMessage.addListener(message => {
             if (message.switchTab) 
-                browser.tabs.update(message.switchTab.id, {active: true, highlighted: true});                
+                chrome.tabs.update(message.switchTab.id, {active: true, highlighted: true});                
         })
-        browser.windows.onCreated.addListener(() => 
+        chrome.windows.onCreated.addListener(() => 
             this.__actualize({})
         )
-        browser.tabs.onCreated.addListener(tab => 
+        chrome.tabs.onCreated.addListener(tab => 
             this.__actualize({tabId: tab.id})
         )        
-        browser.tabs.onActivated.addListener(({tabId}) => 
+        chrome.tabs.onActivated.addListener(({tabId}) => 
             this.__actualize({tabId: tabId, makeScreenShot: true})
         )
-        browser.tabs.onUpdated.addListener((tabId, changeInfo) => 
+        chrome.tabs.onUpdated.addListener((tabId, changeInfo) => 
             changeInfo.status === 'complete' && this.__actualize({tabId: tabId, makeScreenShot: true, fetchFavIcon: true})
         )
-        browser.tabs.onDetached.addListener(tabId => 
+        chrome.tabs.onDetached.addListener(tabId => 
             this.__actualize({tabId: tabId})
         )
-        browser.tabs.onAttached.addListener(tabId => 
+        chrome.tabs.onAttached.addListener(tabId => 
             this.__actualize({tabId: tabId})
         )        
-        browser.tabs.onRemoved.addListener(tabId => 
+        chrome.tabs.onRemoved.addListener(tabId => 
             this.__actualize({tabId: tabId})
         )
     }
 
-    async getTabs() {
-        let window = await browser.windows.getCurrent()
-        return this.__tabs
-            .filter(tab => tab.windowId === window.id)
-            .sort((tab1, tab2) => tab2.timestamp - tab1.timestamp)
+    getTabs(callback) {
+        chrome.windows.getCurrent(window => {
+            let tabs = this.__tabs.filter(tab => tab.windowId === window.id)
+                                  .sort((tab1, tab2) => tab2.timestamp - tab1.timestamp)
+            callback(tabs)
+        })
     }    
 
-    async __actualize({tabId, makeScreenShot, fetchFavIcon}) {
-        let actualTabs = await browser.tabs.query({})
-        for (const actualTab of actualTabs) {
-            let tab = this.__tabs.find(x => x.id === actualTab.id)
-            if (!tab) {
-                tab = {id: actualTab.id}
-                this.__tabs.push(tab)
-            }
-            
-            tab.windowId = actualTab.windowId
-            tab.title = actualTab.title
-            tab.url = actualTab.url
-
-            if (tab.id === tabId && fetchFavIcon || !tab.favIconDataUrl)
-                tab.favIconDataUrl = await this.__getFavIconDataURL(actualTab.favIconUrl)
-
-            if (tab.id === tabId && makeScreenShot)
-                tab.screenShotDataUrl = await this.__makeScreenShot(actualTab)
-
-            if (tab.id === tabId)
-                tab.timestamp = Date.now()
-        }
-
-        this.__tabs = this.__tabs.filter(tab => !!actualTabs.find(actualTab => tab.id === actualTab.id))
-    }
-
-    async __makeScreenShot(tab) {
-        try 
-        {
-            if (tab.active && tab.url && !tab.url.includes("chrome://") && !tab.url.includes("chrome-extension://")) {
-                return browser.tabs.captureVisibleTab(tab.windowId, { format: 'jpeg', quality: 100 })
-            }            
-        } 
-        catch(error) 
-        {
-            console.log(error)
-        }
-
-        return Promise.resolve(undefined)
-    }
-
-    __getFavIconDataURL(favIconUrl) {
-        return new Promise((resolve) => {
-            if (!favIconUrl){
-                resolve(undefined)
-                return
-            }                
-
-            let xhr = new XMLHttpRequest();
-            xhr.open('GET', favIconUrl);
-            xhr.responseType = 'blob';            
-            xhr.onload = () => {
-                let reader = new FileReader();
-                reader.onloadend = () => {
-                    resolve(reader.result);
+    __actualize({tabId, makeScreenShot, fetchFavIcon}) {
+        chrome.tabs.query({}, chromeTabs => {
+            this.__tabs = this.__tabs.filter(tab => !!chromeTabs.find(actualTab => tab.id === actualTab.id))
+            for (const chromeTab of chromeTabs) {
+                let tab = this.__tabs.find(x => x.id === chromeTab.id)
+                if (!tab) {
+                    tab = {id: chromeTab.id}
+                    this.__tabs.push(tab)
                 }
-                reader.onerror = () => resolve(undefined)
-                reader.readAsDataURL(xhr.response);
-            };
-            xhr.onerror = () => resolve(undefined)
-            xhr.send();       
+                
+                tab.windowId = chromeTab.windowId
+                tab.title = chromeTab.title
+                tab.url = chromeTab.url
+    
+                if (tab.id === tabId && fetchFavIcon || !tab.favIconDataUrl)
+                    this.__setFavIconDataURL(tab, chromeTab.favIconUrl)
+    
+                if (tab.id === tabId && makeScreenShot)
+                    this.__makeScreenShot(tab, chromeTab)
+    
+                if (tab.id === tabId)
+                    tab.timestamp = Date.now()
+            }    
         })
+    }
+
+    __makeScreenShot(tab, chromeTab) {        
+        chrome.tabs.captureVisibleTab(chromeTab.windowId, { format: 'jpeg', quality: 100 }, dataUrl => {
+            if(chrome.runtime.lastError) {
+                console.info("Не удалось сделать скриншот", chromeTab)
+                return
+            }
+            tab.screenShotDataUrl = dataUrl
+        })
+    }
+
+    __setFavIconDataURL(tab, favIconUrl) {        
+        if (!favIconUrl)             
+            return
+
+        let xhr = new XMLHttpRequest();
+        xhr.open('GET', favIconUrl);
+        xhr.responseType = 'blob';            
+        xhr.onload = () => {
+            let reader = new FileReader();
+            reader.onloadend = () => {
+                tab.favIconDataUrl = reader.result
+            }
+            reader.readAsDataURL(xhr.response);
+        };
+
+        xhr.send();
     }
 }
 

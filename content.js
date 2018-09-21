@@ -3,8 +3,13 @@
         - переписать это говно на риакт (c Webpack-окм кончено)
         - в 3 версии добавить строку поиска
 */
+if (!document.getElementById('tab-shepherd-alreadyinjected')) {
+let d = document.createElement('div')
+d.id='tab-shepherd-alreadyinjected'
+d.style.display='none'
+document.body.appendChild(d)
 
-let iframe = document.createElement('iframe')
+let  iframe = document.createElement('iframe')
 iframe.src = chrome.extension.getURL('pasture.html')
 iframe.style.cssText = `
     position: fixed;
@@ -33,3 +38,4 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         chrome.runtime.sendMessage(chrome.runtime.id, message)
     }
 })
+}

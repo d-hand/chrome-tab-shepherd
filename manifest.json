@@ -5,7 +5,7 @@
     "manifest_version": 2,
     "permissions": ["tabs", "activeTab", "<all_urls>"],
     "background": {
-        "scripts": [ "browser-polyfill.js", "background.js"],
+        "scripts": [ "background.js"],
         "persistent": true
     },
     "content_scripts": [
